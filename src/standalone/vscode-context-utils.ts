@@ -26,6 +26,10 @@ export class SecretStore implements vscode.SecretStorage {
 		this._onDidChange.fire({ key })
 		return Promise.resolve()
 	}
+
+	keys(): Thenable<string[]> {
+		return Promise.resolve(Array.from(this.data.keys() as Iterable<string>))
+	}
 }
 
 // Create a class that implements Memento interface with the required setKeysForSync method
@@ -68,7 +72,9 @@ export class EventEmitter<T> {
 	}
 
 	fire(data: T): void {
-		this.listeners.forEach((listener) => listener(data))
+		for (const listener of this.listeners) {
+			listener(data)
+		}
 	}
 }
 

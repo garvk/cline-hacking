@@ -56,6 +56,91 @@ body {
 	width: 100%;
 }
 
+/* Dark theme variables for standalone browser version */
+:root[data-platform="standalone"] {
+	/* Primary backgrounds - VSCode Dark+ theme colors */
+	--vscode-editor-background: #1e1e1e;
+	--vscode-sideBar-background: #252526;
+	--vscode-activityBar-background: #2d2d30;
+	--vscode-statusBar-background: #007acc;
+	--vscode-titleBar-activeBackground: #3c3c3c;
+	--vscode-menu-background: #252526;
+
+	/* Text colors */
+	--vscode-editor-foreground: #d4d4d4;
+	--vscode-foreground: #cccccc;
+	--vscode-descriptionForeground: #cccccc99;
+	--vscode-icon-foreground: #cccccc;
+
+	/* Button colors */
+	--vscode-button-background: #0e639c;
+	--vscode-button-foreground: #ffffff;
+	--vscode-button-hoverBackground: #1177bb;
+	--vscode-button-secondaryBackground: #3a3d41;
+	--vscode-button-secondaryForeground: #cccccc;
+	--vscode-button-secondaryHoverBackground: #45494e;
+	--vscode-button-border: #0e639c;
+
+	/* Input colors */
+	--vscode-input-background: #3c3c3c;
+	--vscode-input-foreground: #cccccc;
+	--vscode-input-border: #3c3c3c;
+	--vscode-input-placeholderForeground: #cccccc80;
+	--vscode-inputOption-activeBorder: #007acc;
+	--vscode-inputOption-activeBackground: #0e639c1a;
+	--vscode-inputOption-activeForeground: #ffffff;
+
+	/* Border colors */
+	--vscode-panel-border: #80808059;
+	--vscode-sideBar-border: #2b2b2b;
+	--vscode-focusBorder: #007fd4;
+	--vscode-contrastBorder: #6fc3df;
+
+	/* List and selection colors */
+	--vscode-list-activeSelectionBackground: #094771;
+	--vscode-list-activeSelectionForeground: #ffffff;
+	--vscode-list-hoverBackground: #2a2d2e;
+	--vscode-list-inactiveSelectionBackground: #37373d;
+	--vscode-list-focusBackground: #062f4a;
+
+	/* Scrollbar colors */
+	--vscode-scrollbarSlider-background: #79797966;
+	--vscode-scrollbarSlider-hoverBackground: #646464b3;
+	--vscode-scrollbarSlider-activeBackground: #bfbfbf66;
+
+	/* Badge colors */
+	--vscode-badge-background: #4d4d4d;
+	--vscode-badge-foreground: #ffffff;
+
+	/* Progress bar */
+	--vscode-progressBar-background: #0e70c0;
+
+	/* Notification colors */
+	--vscode-notifications-background: #252526;
+	--vscode-notifications-foreground: #cccccc;
+	--vscode-notificationToast-border: #474747;
+
+	/* Error colors */
+	--vscode-errorForeground: #f14c4c;
+	--vscode-warningForeground: #ffb454;
+	--vscode-infoForeground: #3794ff;
+
+	/* Terminal colors */
+	--vscode-terminal-background: #1e1e1e;
+	--vscode-terminal-foreground: #cccccc;
+
+	/* Checkbox colors */
+	--vscode-checkbox-background: #3c3c3c;
+	--vscode-checkbox-foreground: #f0f0f0;
+	--vscode-checkbox-border: #3c3c3c;
+}
+
+/* Ensure body and root have proper background for standalone */
+:root[data-platform="standalone"] body {
+	background-color: var(--vscode-editor-background, #1e1e1e);
+	color: var(--vscode-editor-foreground, #d4d4d4);
+}
+
 #root {
 	height: 100%;
 	width: 100%;
