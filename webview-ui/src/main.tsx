@@ -4,7 +4,12 @@ import "./index.css"
 import App from "./App.tsx"
 import { PLATFORM_CONFIG, PlatformType } from "./config/platform.config"
 
-const platformName = PLATFORM_CONFIG.type === PlatformType.STANDALONE ? "standalone" : "vscode"
+const platformName =
+	PLATFORM_CONFIG.type === PlatformType.STANDALONE
+		? "standalone"
+		: PLATFORM_CONFIG.type === PlatformType.CHROME_EXTENSION
+			? "chrome-extension"
+			: "vscode"
 document.documentElement.setAttribute("data-platform", platformName)
 
 createRoot(document.getElementById("root")!).render(

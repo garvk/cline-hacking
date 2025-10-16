@@ -14,12 +14,14 @@ export interface PlatformConfig {
 export enum PlatformType {
 	VSCODE = 0,
 	STANDALONE = 1,
+	CHROME_EXTENSION = 2,
 }
 
 function stringToPlatformType(name: string): PlatformType {
 	const mapping: Record<string, PlatformType> = {
 		vscode: PlatformType.VSCODE,
 		standalone: PlatformType.STANDALONE,
+		chrome_extension: PlatformType.CHROME_EXTENSION,
 	}
 	if (name in mapping) {
 		return mapping[name]
@@ -33,7 +35,7 @@ function stringToPlatformType(name: string): PlatformType {
 type PlatformConfigJson = {
 	messageEncoding: "none" | "json"
 	showNavbar: boolean
-	postMessageHandler: "vscode" | "standalone"
+	postMessageHandler: "vscode" | "standalone" | "chrome_extension"
 	togglePlanActKeys: string
 	supportsTerminalMentions: boolean
 }
@@ -47,6 +49,7 @@ declare global {
 		// !! Do not change the name of the handler without updating it on
 		// the JetBrains side as well. !!
 		standalonePostMessage?: (message: string) => void
+		chromeExtensionPostMessage?: (message: string) => void
 	}
 	function acquireVsCodeApi(): any
 }
@@ -71,6 +74,15 @@ const postMessageStrategies: Record<string, PostMessageFunction> = {
 		const json = JSON.stringify(message)
 		console.log("Standalone postMessage: " + json.slice(0, 200))
 		window.standalonePostMessage(json)
+	},
+	"chrome-extension": (message: any) => {
+		if (!window.chromeExtensionPostMessage) {
+			console.error("Chrome extension postMessage not found.")
+			return
+		}
+		const json = JSON.stringify(message)
+		console.log("Chrome extension postMessage: " + json.slice(0, 200))
+		window.chromeExtensionPostMessage(json)
 	},
 }
 
