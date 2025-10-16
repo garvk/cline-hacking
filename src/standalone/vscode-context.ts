@@ -66,6 +66,12 @@ export function initializeContext(clineDir?: string) {
 
 		// Workspace state is per project/workspace when WORKSPACE_STORAGE_DIR is provided by the host.
 		workspaceState: new MementoStore(path.join(WORKSPACE_STORAGE_DIR, "workspaceState.json")),
+
+		// Language model access information (required for newer VSCode versions)
+		languageModelAccessInformation: {
+			onDidChange: () => ({ dispose: () => {} }),
+			canSendRequest: () => true,
+		},
 	}
 
 	log("Finished loading vscode context...")

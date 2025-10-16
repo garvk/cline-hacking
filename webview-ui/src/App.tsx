@@ -50,7 +50,14 @@ const AppContent = () => {
 	}, [shouldShowAnnouncement, setShouldShowAnnouncement, setShowAnnouncement])
 
 	if (!didHydrateState) {
-		return null
+		return (
+			<div className="flex h-screen w-full items-center justify-center">
+				<div className="text-center">
+					<div className="mb-4 text-lg">Loading Cline...</div>
+					<div className="text-sm text-gray-500">Initializing interface</div>
+				</div>
+			</div>
+		)
 	}
 
 	if (showWelcome) {

@@ -13,8 +13,10 @@ import { HOSTBRIDGE_PORT, waitForHostBridgeReady } from "./hostbridge-client"
 import { PROTOBUS_PORT, startProtobusService } from "./protobus-service"
 import { log } from "./utils"
 import { initializeContext } from "./vscode-context"
+import { WebServer } from "./web-server"
 
 let globalLockManager: SqliteLockManager | undefined
+let webServer: WebServer | undefined
 
 async function main() {
 	log("\n\n\nStarting cline-core service...\n\n\n")
@@ -75,10 +77,19 @@ async function main() {
 		})
 		log(`Registered instance in SQLite locks: ${protobusAddress}`)
 
+		//  Start web server
+		const webPort = 8001
+		webServer = new WebServer({
+			port: webPort,
+			controller: webviewProvider.controller,
+		})
+
+		const webAddress = await webServer.start()
 		// Mark instance healthy after services are up
 		globalLockManager.touchInstance()
 
 		log("✅ All services started successfully")
+		log("Open browser to: http://localhost:25463")
 	} catch (err) {
 		log(`FATAL ERROR during startup: ${err}`)
 		log(`Cleaning up and shutting down...`)
@@ -199,8 +210,19 @@ async function shutdownGracefully(lockManager?: SqliteLockManager) {
 			log(`Warning: Failed to clean up lock manager: ${error}`)
 		}
 
-		// Step 3: Tear down services
+		// Step 3: Stopping web server..."
+		log("Stopping web server..")
+		try {
+			if (webServer) {
+				await webServer.stop()
+				log("Web server stopped")
+			}
+		} catch (error) {
+			log(`WARNING: Failt to stop web server: ${error}`)
+		}
+		// Step 4: Tear down services
 		log("Tearing down services...")
+
 		try {
 			tearDown()
 			log("Services torn down successfully")

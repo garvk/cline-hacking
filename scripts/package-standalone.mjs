@@ -25,7 +25,8 @@ const TARGET_PLATFORMS = [
 ]
 const SUPPORTED_BINARY_MODULES = ["better-sqlite3"]
 
-const UNIVERSAL_BUILD = !process.argv.includes("-s")
+const UNIVERSAL_BUILD =
+	!process.argv.includes("-s") && !process.argv.includes("--single-platform") && !process.env.SINGLE_PLATFORM
 const IS_VERBOSE = process.argv.includes("-v") || process.argv.includes("--verbose")
 
 async function main() {
@@ -35,6 +36,7 @@ async function main() {
 		await packageAllBinaryDeps()
 	} else {
 		console.log(`Building package for ${os.platform()}-${os.arch()}...`)
+		await packageCurrentPlatformOnly()
 	}
 	await zipDistribution()
 }
@@ -98,6 +100,81 @@ async function packageAllBinaryDeps() {
 			execSync(cmd, { cwd: dest, stdio: "inherit" })
 			log_verbose("")
 		}
+		// Remove the original module with the host platform binaries installed directly into node_modules.
+		log_verbose(`Cleaning up host version of ${module}`)
+		await rmrf(src)
+		log_verbose("")
+	}
+}
+
+/**
+ * Packages binaries only for the current platform, avoiding certificate issues
+ * with downloading binaries for other platforms.
+ */
+async function packageCurrentPlatformOnly() {
+	// Check for native .node modules.
+	const allNativeModules = await glob("**/*.node", { cwd: path.join(BUILD_DIR, "node_modules"), nodir: true })
+	const isAllowed = (path) => SUPPORTED_BINARY_MODULES.some((allowed) => path.includes(allowed))
+	const blocked = allNativeModules.filter((x) => !isAllowed(x))
+
+	if (blocked.length > 0) {
+		console.error(`Error: Native node modules cannot be included in the standalone distribution:\n\n${blocked.join("\n")}`)
+		console.error(
+			"\nThese modules must support prebuilt-install and be added to the supported list in scripts/package-standalone.mjs",
+		)
+		process.exit(1)
+	}
+
+	// Find the current platform configuration
+	const currentPlatform = TARGET_PLATFORMS.find((p) => p.platform === os.platform() && p.arch === os.arch())
+	if (!currentPlatform) {
+		console.warn(
+			`Warning: Current platform ${os.platform()}-${os.arch()} not found in TARGET_PLATFORMS, skipping binary packaging`,
+		)
+		return
+	}
+
+	for (const module of SUPPORTED_BINARY_MODULES) {
+		console.log(`Installing binaries for ${module} (${currentPlatform.platform}-${currentPlatform.arch} only)...`)
+		const src = path.join(BUILD_DIR, "node_modules", module)
+		if (!fs.existsSync(src)) {
+			console.warn(`Warning: Trying to install binaries for the module '${module}', but it is not being used by cline.`)
+			continue
+		}
+
+		// Only process the current platform
+		const { platform, arch, targetDir } = currentPlatform
+		const binaryDir = `${BINARIES_DIR}/${targetDir}/node_modules`
+		fs.mkdirSync(binaryDir, { recursive: true })
+
+		// Copy the module from the build dir
+		const dest = path.join(binaryDir, module)
+		await cpr(src, dest)
+
+		// Download the binary libs with certificate bypass
+		const v = IS_VERBOSE ? "--verbose" : ""
+		const cmd = `npx prebuild-install --platform=${platform} --arch=${arch} --target=${TARGET_NODE_VERSION} ${v}`
+		log_verbose(`${module}: ${cmd}`)
+
+		try {
+			execSync(cmd, {
+				cwd: dest,
+				stdio: "inherit",
+				env: {
+					...process.env,
+					// Bypass SSL certificate verification for corporate networks
+					NODE_TLS_REJECT_UNAUTHORIZED: "0",
+					npm_config_strict_ssl: "false",
+				},
+			})
+		} catch (error) {
+			console.warn(
+				`Warning: Failed to download prebuilt binary for ${module}. The module may still work with a locally compiled version.`,
+			)
+			console.warn(`Error: ${error.message}`)
+		}
+		log_verbose("")
+
 		// Remove the original module with the host platform binaries installed directly into node_modules.
 		log_verbose(`Cleaning up host version of ${module}`)
 		await rmrf(src)

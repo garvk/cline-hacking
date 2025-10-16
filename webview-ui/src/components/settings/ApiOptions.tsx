@@ -538,11 +538,15 @@ const ProviderDropdownList = styled.div`
 	border-bottom-right-radius: 3px;
 `
 
-const ProviderDropdownItem = styled.div<{ isSelected: boolean }>`
+const ProviderDropdownItem = styled.div.withConfig({
+	shouldForwardProp: (prop) => prop !== "isSelected",
+})<{ isSelected: boolean }>`
+
 	padding: 5px 10px;
 	cursor: pointer;
 	word-break: break-all;
 	white-space: normal;
+
 
 	background-color: ${({ isSelected }) => (isSelected ? "var(--vscode-list-activeSelectionBackground)" : "inherit")};
 
@@ -550,3 +554,18 @@ const ProviderDropdownItem = styled.div<{ isSelected: boolean }>`
 		background-color: var(--vscode-list-activeSelectionBackground);
 	}
 `
+
+// {
+// 	shouldForwardProp: (prop) => prop !== "isSelected",
+// })<{ isSelected: boolean }>`
+// 	padding: 5px 10px;
+// 	cursor: pointer;
+// 	word-break: break-all;
+// 	white-space: normal;
+
+// 	background-color: ${({ isSelected }) => (isSelected ? "var(--vscode-list-activeSelectionBackground)" : "inherit")};
+
+// 	&:hover {
+// 		background-color: var(--vscode-list-activeSelectionBackground);
+// 	}
+// `

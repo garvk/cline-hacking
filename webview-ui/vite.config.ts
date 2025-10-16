@@ -109,6 +109,10 @@ export default defineConfig({
 			methods: "*",
 			allowedHeaders: "*",
 		},
+		fs: {
+			// to allow the vite server to access the files in the node_modules directory
+			allow: [".."],
+		},
 	},
 	define: {
 		__PLATFORM__: JSON.stringify(platform),
