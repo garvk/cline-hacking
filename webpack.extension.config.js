@@ -178,6 +178,7 @@ module.exports = (env, argv) => {
 			// Provide Node.js globals for browser
 			new webpack.ProvidePlugin({
 				Buffer: ["buffer", "Buffer"],
+				process: require.resolve("process/browser.js"),
 			}),
 
 			// Environment-specific optimizations

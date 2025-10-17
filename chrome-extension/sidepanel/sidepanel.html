@@ -1,9 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cline AI Assistant</title>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Cline AI Assistant</title>
+		
+		<!-- CRITICAL: Define chromeExtensionPostMessage stub EARLY to prevent race condition -->
+		<script>
+			// Define platform and postMessage function before any other scripts load
+			window.__PLATFORM__ = "chrome-extension";
+			
+			// Temporary stub - will be replaced by sidepanel.js once it loads
+			// This prevents "postMessage not found" errors during React initialization
+			window.chromeExtensionPostMessage = function(msg) {
+				console.log('[Early Stub] chromeExtensionPostMessage called before sidepanel.js loaded, queueing...');
+				if (!window.__messageQueue) window.__messageQueue = [];
+				window.__messageQueue.push(msg);
+			};
+		</script>
   <style>
     /* Base styles for side panel */
     body {
@@ -225,15 +239,8 @@
     </div>
   </div>
 
-  <!-- Main Cline app container -->
-  <div id="cline-root">
-    <!-- Loading state while app initializes -->
-    <div id="loading-container" class="loading-container">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Loading Cline AI Assistant...</div>
-      <div class="loading-details">Initializing extension and checking backend connection</div>
-    </div>
-  </div>
+  <!-- React app root - this is where the Cline app will mount -->
+  <div id="root"></div>
 
   <!-- Setup instructions template (hidden by default) -->
   <div id="setup-template" style="display: none;">
@@ -277,10 +284,13 @@
     </div>
   </div>
 
-  <!-- Load the side panel controller -->
+  <!-- Load the side panel controller first -->
   <script src="sidepanel.js"></script>
   
-  <!-- The React app bundle will be loaded here -->
-  <!-- <script src="cline-app.js"></script> -->
+  <!-- Load shared vendor bundle (React, dependencies) -->
+  <script src="../shared/vendor.js"></script>
+  
+  <!-- Load the React app bundle -->
+  <script src="cline-app.js"></script>
 </body>
 </html>

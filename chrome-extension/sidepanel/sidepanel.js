@@ -53,6 +53,10 @@ class SidePanelController {
 			// Initialize the Chrome extension message bridge
 			this.initializeMessageBridge()
 
+			// CRITICAL FIX: Fetch and dispatch initial state BEFORE loading React app
+			// This prevents the race condition where React mounts before state is available
+			await this.fetchAndDispatchInitialState()
+
 			// Load the React app
 			await this.loadClineApp()
 		} catch (error) {
@@ -124,11 +128,71 @@ class SidePanelController {
 		}
 	}
 
+	/**
+	 * Proactively fetch and dispatch initial state to prevent race condition.
+	 * This mimics the WebSocket version's broadcastStateToClient behavior.
+	 */
+	async fetchAndDispatchInitialState() {
+		console.log("[SidePanel] 🚀 Fetching initial state proactively (race condition fix)...")
+		this.updateLoadingText("Loading initial state...")
+
+		try {
+			const response = await chrome.runtime.sendMessage({
+				type: "GRPC_REQUEST",
+				data: {
+					type: "grpc_request",
+					grpc_request: {
+						service: "cline.StateService",
+						method: "subscribeToState",
+						message: {},
+						request_id: "initial_state_preload",
+						is_streaming: false,
+					},
+				},
+			})
+
+			if (chrome.runtime.lastError) {
+				console.error("[SidePanel] Chrome runtime error:", chrome.runtime.lastError)
+				throw new Error(chrome.runtime.lastError.message)
+			}
+
+			if (response?.success && response.data) {
+				console.log("[SidePanel] ✅ Initial state fetched successfully!")
+				console.log("[SidePanel] Response type:", response.data.type)
+				console.log("[SidePanel] Has grpc_response:", !!response.data.grpc_response)
+
+				// Log state details for debugging
+				if (response.data.grpc_response?.message?.stateJson) {
+					const statePreview = response.data.grpc_response.message.stateJson.slice(0, 200)
+					console.log("[SidePanel] State preview:", statePreview + "...")
+				}
+
+				// Dispatch state to window BEFORE React app loads
+				// This ensures state is available when ExtensionStateContext initializes
+				window.dispatchEvent(
+					new MessageEvent("message", {
+						data: response.data,
+					}),
+				)
+
+				console.log("[SidePanel] ✅ Initial state dispatched to window - React app will find it ready!")
+			} else if (response?.fallbackMode) {
+				console.warn("[SidePanel] ⚠️ Backend unavailable - fallback mode")
+				// Continue anyway, React app will handle this
+			} else {
+				console.warn("[SidePanel] ⚠️ Unexpected response format:", response)
+			}
+		} catch (error) {
+			console.error("[SidePanel] ❌ Failed to fetch initial state:", error)
+			// Don't throw - let React app handle the missing state gracefully
+		}
+	}
+
 	initializeMessageBridge() {
 		console.log("[SidePanel] Setting up Chrome extension message bridge...")
 
 		// Create the global postMessage function that the React app expects
-		window.chromeExtensionPostMessage = (messageString) => {
+		const realPostMessage = (messageString) => {
 			console.log("[SidePanel] Sending message to background:", messageString.slice(0, 200) + "...")
 
 			try {
@@ -148,7 +212,12 @@ class SidePanelController {
 						console.log("[SidePanel] Received response:", response?.success ? "Success" : "Failed")
 
 						// Dispatch response back to React app
-						if (response?.success) {
+						if (response?.success && response.data) {
+							// Log response details for debugging
+							if (response.data.type === "grpc_response") {
+								console.log("[SidePanel] gRPC response - request_id:", response.data.grpc_response?.request_id)
+							}
+
 							window.dispatchEvent(
 								new MessageEvent("message", {
 									data: response.data,
@@ -181,6 +250,20 @@ class SidePanelController {
 			} catch (error) {
 				console.error("[SidePanel] Error parsing message:", error)
 			}
+		}
+
+		// Replace the stub with the real implementation
+		window.chromeExtensionPostMessage = realPostMessage
+
+		// Process any messages that were queued before the real function was ready
+		if (window.__messageQueue && window.__messageQueue.length > 0) {
+			console.log(`[SidePanel] Processing ${window.__messageQueue.length} queued messages...`)
+			const queue = window.__messageQueue
+			window.__messageQueue = []
+			queue.forEach((msg) => {
+				console.log("[SidePanel] Processing queued message:", msg.slice(0, 100) + "...")
+				realPostMessage(msg)
+			})
 		}
 
 		// Set up platform configuration for chrome-extension mode
