@@ -21,6 +21,9 @@ The correct order is:
 @import url("../../node_modules/@vscode/codicons/dist/codicon.css");
 @import url("../node_modules/@fontsource/azeret-mono/index.css");
 
+/* Import IBM Plex Mono for chrome-extension platform */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap");
+
 /* Tailwind imports come after external imports */
 @import "tailwindcss/theme.css" layer(theme);
 /* Disable Tailwind's CSS reset to preserve existing styles */
@@ -54,6 +57,243 @@ body {
 	line-height: 1.25;
 	height: 100%;
 	width: 100%;
+}
+
+/* Chrome Extension - Minimalist Monochrome Design System */
+:root[data-platform="chrome-extension"] {
+	/* Font Configuration - Improved Legibility (CSS variables only, no direct application) */
+	--font-family: "IBM Plex Mono", "Courier New", monospace;
+	--font-size: 0.875rem;
+	--font-size-sm: 0.8125rem;
+	--font-size-lg: 0.9375rem;
+	--line-height: 1.6;
+	--letter-spacing: 0.02em;
+
+	/* Design Tokens */
+	--line-thin: 1px;
+	--line-medium: 2px;
+	--spacing-grid: 8px;
+	--transition-smooth: all 0.15s ease;
+	--radius: 0rem;
+
+	/* Light Mode Colors (HSL) - Improved Contrast */
+	--background: 0 0% 100%;
+	--foreground: 0 0% 8%;
+	--card: 0 0% 100%;
+	--card-foreground: 0 0% 8%;
+	--popover: 0 0% 100%;
+	--popover-foreground: 0 0% 8%;
+
+	--primary: 0 0% 8%;
+	--primary-foreground: 0 0% 98%;
+
+	--secondary: 0 0% 96%;
+	--secondary-foreground: 0 0% 8%;
+
+	--muted: 0 0% 96%;
+	--muted-foreground: 0 0% 45%;
+
+	--accent: 0 0% 93%;
+	--accent-foreground: 0 0% 8%;
+
+	--status-active: 142 76% 45%;
+
+	--destructive: 0 0% 15%;
+	--destructive-foreground: 0 0% 98%;
+
+	--border: 0 0% 85%;
+	--border-strong: 0 0% 20%;
+	--input: 0 0% 85%;
+	--ring: 0 0% 20%;
+
+	/* VSCode variable mappings for compatibility */
+	--vscode-editor-background: hsl(var(--background));
+	--vscode-sideBar-background: hsl(var(--card));
+	--vscode-activityBar-background: hsl(var(--secondary));
+	--vscode-statusBar-background: hsl(var(--primary));
+	--vscode-titleBar-activeBackground: hsl(var(--card));
+	--vscode-menu-background: hsl(var(--card));
+
+	--vscode-editor-foreground: hsl(var(--foreground));
+	--vscode-foreground: hsl(var(--foreground));
+	--vscode-descriptionForeground: hsl(var(--muted-foreground));
+	--vscode-icon-foreground: hsl(var(--foreground));
+
+	--vscode-button-background: hsl(var(--primary));
+	--vscode-button-foreground: hsl(var(--primary-foreground));
+	--vscode-button-hoverBackground: hsl(var(--accent));
+	--vscode-button-secondaryBackground: hsl(var(--secondary));
+	--vscode-button-secondaryForeground: hsl(var(--secondary-foreground));
+	--vscode-button-secondaryHoverBackground: hsl(var(--accent));
+	--vscode-button-border: hsl(var(--border));
+
+	--vscode-input-background: hsl(var(--background));
+	--vscode-input-foreground: hsl(var(--foreground));
+	--vscode-input-border: hsl(var(--border));
+	--vscode-input-placeholderForeground: hsl(var(--muted-foreground));
+	--vscode-inputOption-activeBorder: hsl(var(--ring));
+	--vscode-inputOption-activeBackground: hsl(var(--accent));
+	--vscode-inputOption-activeForeground: hsl(var(--foreground));
+
+	--vscode-panel-border: hsl(var(--border));
+	--vscode-sideBar-border: hsl(var(--border));
+	--vscode-focusBorder: hsl(var(--ring));
+	--vscode-contrastBorder: hsl(var(--border-strong));
+
+	--vscode-list-activeSelectionBackground: hsl(var(--accent));
+	--vscode-list-activeSelectionForeground: hsl(var(--foreground));
+	--vscode-list-hoverBackground: hsl(var(--muted));
+	--vscode-list-inactiveSelectionBackground: hsl(var(--secondary));
+	--vscode-list-focusBackground: hsl(var(--accent));
+
+	--vscode-scrollbarSlider-background: hsl(var(--muted-foreground) / 0.3);
+	--vscode-scrollbarSlider-hoverBackground: hsl(var(--muted-foreground) / 0.5);
+	--vscode-scrollbarSlider-activeBackground: hsl(var(--muted-foreground) / 0.7);
+
+	--vscode-badge-background: hsl(var(--primary));
+	--vscode-badge-foreground: hsl(var(--primary-foreground));
+
+	--vscode-progressBar-background: hsl(var(--status-active));
+
+	--vscode-notifications-background: hsl(var(--card));
+	--vscode-notifications-foreground: hsl(var(--foreground));
+	--vscode-notificationToast-border: hsl(var(--border));
+
+	--vscode-errorForeground: hsl(0 70% 50%);
+	--vscode-warningForeground: hsl(38 92% 50%);
+	--vscode-infoForeground: hsl(210 100% 56%);
+
+	--vscode-terminal-background: hsl(var(--background));
+	--vscode-terminal-foreground: hsl(var(--foreground));
+
+	--vscode-checkbox-background: hsl(var(--background));
+	--vscode-checkbox-foreground: hsl(var(--foreground));
+	--vscode-checkbox-border: hsl(var(--border));
+}
+
+/* Chrome Extension Dark Mode */
+:root[data-platform="chrome-extension"].dark {
+	/* Dark Mode Colors (HSL) - Improved Contrast */
+	--background: 0 0% 5%;
+	--foreground: 0 0% 95%;
+	--card: 0 0% 10%;
+	--card-foreground: 0 0% 95%;
+	--popover: 0 0% 10%;
+	--popover-foreground: 0 0% 95%;
+
+	--primary: 0 0% 95%;
+	--primary-foreground: 0 0% 5%;
+
+	--secondary: 0 0% 15%;
+	--secondary-foreground: 0 0% 95%;
+
+	--muted: 0 0% 15%;
+	--muted-foreground: 0 0% 65%;
+
+	--accent: 0 0% 18%;
+	--accent-foreground: 0 0% 95%;
+
+	--status-active: 142 76% 45%;
+
+	--destructive: 0 0% 85%;
+	--destructive-foreground: 0 0% 5%;
+
+	--border: 0 0% 25%;
+	--border-strong: 0 0% 80%;
+	--input: 0 0% 18%;
+	--ring: 0 0% 80%;
+
+	/* VSCode variable mappings for dark mode */
+	--vscode-editor-background: hsl(var(--background));
+	--vscode-sideBar-background: hsl(var(--card));
+	--vscode-activityBar-background: hsl(var(--secondary));
+	--vscode-statusBar-background: hsl(var(--primary));
+	--vscode-titleBar-activeBackground: hsl(var(--card));
+	--vscode-menu-background: hsl(var(--card));
+
+	--vscode-editor-foreground: hsl(var(--foreground));
+	--vscode-foreground: hsl(var(--foreground));
+	--vscode-descriptionForeground: hsl(var(--muted-foreground));
+	--vscode-icon-foreground: hsl(var(--foreground));
+
+	--vscode-button-background: hsl(var(--primary));
+	--vscode-button-foreground: hsl(var(--primary-foreground));
+	--vscode-button-hoverBackground: hsl(var(--accent));
+	--vscode-button-secondaryBackground: hsl(var(--secondary));
+	--vscode-button-secondaryForeground: hsl(var(--secondary-foreground));
+	--vscode-button-secondaryHoverBackground: hsl(var(--accent));
+	--vscode-button-border: hsl(var(--border));
+
+	--vscode-input-background: hsl(var(--card));
+	--vscode-input-foreground: hsl(var(--foreground));
+	--vscode-input-border: hsl(var(--border));
+	--vscode-input-placeholderForeground: hsl(var(--muted-foreground));
+	--vscode-inputOption-activeBorder: hsl(var(--ring));
+	--vscode-inputOption-activeBackground: hsl(var(--accent));
+	--vscode-inputOption-activeForeground: hsl(var(--foreground));
+
+	--vscode-panel-border: hsl(var(--border));
+	--vscode-sideBar-border: hsl(var(--border));
+	--vscode-focusBorder: hsl(var(--ring));
+	--vscode-contrastBorder: hsl(var(--border-strong));
+
+	--vscode-list-activeSelectionBackground: hsl(var(--accent));
+	--vscode-list-activeSelectionForeground: hsl(var(--foreground));
+	--vscode-list-hoverBackground: hsl(var(--muted));
+	--vscode-list-inactiveSelectionBackground: hsl(var(--secondary));
+	--vscode-list-focusBackground: hsl(var(--accent));
+
+	--vscode-scrollbarSlider-background: hsl(var(--muted-foreground) / 0.3);
+	--vscode-scrollbarSlider-hoverBackground: hsl(var(--muted-foreground) / 0.5);
+	--vscode-scrollbarSlider-activeBackground: hsl(var(--muted-foreground) / 0.7);
+
+	--vscode-badge-background: hsl(var(--primary));
+	--vscode-badge-foreground: hsl(var(--primary-foreground));
+
+	--vscode-progressBar-background: hsl(var(--status-active));
+
+	--vscode-notifications-background: hsl(var(--card));
+	--vscode-notifications-foreground: hsl(var(--foreground));
+	--vscode-notificationToast-border: hsl(var(--border));
+
+	--vscode-errorForeground: hsl(0 70% 60%);
+	--vscode-warningForeground: hsl(38 92% 60%);
+	--vscode-infoForeground: hsl(210 100% 66%);
+
+	--vscode-terminal-background: hsl(var(--background));
+	--vscode-terminal-foreground: hsl(var(--foreground));
+
+	--vscode-checkbox-background: hsl(var(--card));
+	--vscode-checkbox-foreground: hsl(var(--foreground));
+	--vscode-checkbox-border: hsl(var(--border));
+}
+
+/* Apply IBM Plex Mono to chrome-extension platform - ONLY color and font family */
+:root[data-platform="chrome-extension"] body {
+	font-family: var(--font-family);
+	background-color: hsl(var(--background));
+	color: hsl(var(--foreground));
+	font-weight: 400;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply typography only to text elements, NOT to layout-critical elements */
+:root[data-platform="chrome-extension"] p,
+:root[data-platform="chrome-extension"] span,
+:root[data-platform="chrome-extension"] label,
+:root[data-platform="chrome-extension"] li {
+	font-family: var(--font-family);
+	letter-spacing: var(--letter-spacing);
+}
+
+/* Chrome Extension Custom Utility Classes - Clean Borders */
+:root[data-platform="chrome-extension"] .line-frame {
+	border: var(--line-thin) solid hsl(var(--border));
+}
+
+:root[data-platform="chrome-extension"] .line-frame-strong {
+	border: var(--line-medium) solid hsl(var(--border-strong));
 }
 
 /* Dark theme variables for standalone browser version */

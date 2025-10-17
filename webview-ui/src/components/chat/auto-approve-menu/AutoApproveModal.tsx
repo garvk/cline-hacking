@@ -5,7 +5,6 @@ import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock"
 import HeroTooltip from "@/components/common/HeroTooltip"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useAutoApproveActions } from "@/hooks/useAutoApproveActions"
-import { getAsVar, VSC_TITLEBAR_INACTIVE_FOREGROUND } from "@/utils/vscStyles"
 import AutoApproveMenuItem from "./AutoApproveMenuItem"
 import { ActionMetadata } from "./types"
 
@@ -152,25 +151,8 @@ const AutoApproveModal: React.FC<AutoApproveModalProps> = ({
 						<span className="text-[color:var(--vscode-foreground)] font-medium">Actions:</span>
 					</div>
 
-					<div
-						className="relative mb-6"
-						ref={itemsContainerRef}
-						style={{
-							columnCount: containerWidth > breakpoint ? 2 : 1,
-							columnGap: "4px",
-						}}>
-						{/* Vertical separator line - only visible in two-column mode */}
-						{containerWidth > breakpoint && (
-							<div
-								className="absolute left-1/2 top-0 bottom-0 w-[0.5px] opacity-20"
-								style={{
-									background: getAsVar(VSC_TITLEBAR_INACTIVE_FOREGROUND),
-									transform: "translateX(-50%)", // Center the line
-								}}
-							/>
-						)}
-
-						{/* All items in a single list - CSS Grid will handle the column distribution */}
+					<div className="relative mb-6 flex flex-row flex-wrap gap-3" ref={itemsContainerRef}>
+						{/* All items in a horizontal flex row */}
 						{ACTION_METADATA.map((action) => (
 							<AutoApproveMenuItem
 								action={action}
