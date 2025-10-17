@@ -167,9 +167,12 @@ export class BackendConnector {
 			const data = await response.json()
 			console.log("[BackendConnector] Backend response received:", data?.success ? "Success" : "Failed")
 
+			// CRITICAL FIX: Unwrap the response field from web-server's HTTP response
+			// web-server returns: { success: true, response: gRPCData }
+			// We need to extract just the gRPCData to match WebSocket behavior
 			return {
 				success: true,
-				data: data,
+				data: data.response || data, // Unwrap 'response' field, fallback to data if not present
 			}
 		} catch (error) {
 			console.error("[BackendConnector] Request failed:", error)

@@ -21,7 +21,7 @@ function stringToPlatformType(name: string): PlatformType {
 	const mapping: Record<string, PlatformType> = {
 		vscode: PlatformType.VSCODE,
 		standalone: PlatformType.STANDALONE,
-		chrome_extension: PlatformType.CHROME_EXTENSION,
+		"chrome-extension": PlatformType.CHROME_EXTENSION,
 	}
 	if (name in mapping) {
 		return mapping[name]
