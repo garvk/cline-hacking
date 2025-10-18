@@ -65,10 +65,27 @@ export abstract class ProtoBusClient {
 		callbacks: Callbacks<TResponse>,
 	): () => void {
 		const requestId = uuidv4()
+
+		// List of broadcast request IDs that should be processed by all subscriptions
+		// These are used for SSE events in Chrome Extension to broadcast state updates
+		const broadcastRequestIds = [
+			"state_update",
+			"state_broadcast",
+			"initial_state",
+			"task_created",
+			"task_cancelled",
+			"task_cleared",
+			"task_deleted",
+		]
+
 		// Set up listener for streaming responses
 		const handleResponse = (event: MessageEvent) => {
 			const message = event.data
-			if (message.type === "grpc_response" && message.grpc_response?.request_id === requestId) {
+			const isBroadcast =
+				message.grpc_response?.request_id && broadcastRequestIds.includes(message.grpc_response.request_id)
+
+			// Process message if it matches our request_id OR it's a broadcast message
+			if (message.type === "grpc_response" && (message.grpc_response?.request_id === requestId || isBroadcast)) {
 				if (message.grpc_response.message) {
 					// Process streaming message
 					const response = PLATFORM_CONFIG.decodeMessage(message.grpc_response.message, decodeResponse)
