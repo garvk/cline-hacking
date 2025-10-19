@@ -1,1 +1,0 @@
-window.__PLATFORM__="chrome-extension",window.chromeExtensionPostMessage=function(e){console.log("[Early Stub] chromeExtensionPostMessage called before sidepanel.js loaded, queueing..."),window.__messageQueue||(window.__messageQueue=[]),window.__messageQueue.push(e)},console.log("[Platform Init] Chrome extension platform initialized");

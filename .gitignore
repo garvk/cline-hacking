@@ -6,6 +6,9 @@ tmp
 .vscode-test/
 *.vsix
 
+chrome-extension/
+dist-extension/
+
 .DS_Store
 .idea
 
