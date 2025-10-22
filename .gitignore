@@ -10,7 +10,7 @@ tmp
 .idea
 
 pnpm-lock.yaml
-dist-extension/
+# dist-extension/
 chrome-extension-dev/
 .clineignore
 .venv

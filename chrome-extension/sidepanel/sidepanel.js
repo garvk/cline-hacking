@@ -5,6 +5,8 @@ class SidePanelController {
 	constructor() {
 		this.backendConnected = false
 		this.appLoaded = false
+		this.currentTaskId = null // Track current task to prevent reload loops
+		this.taskLoadInProgress = false // Prevent concurrent task loads
 		this.setupEventListeners()
 		this.initialize()
 	}
@@ -189,124 +191,189 @@ class SidePanelController {
 	}
 
 	initializeMessageBridge() {
-		console.log("[SidePanel] Setting up Chrome extension message bridge...")
+		console.log("[SidePanel] Setting up WebSocket connection for streaming...")
 
-		// Create the global postMessage function that the React app expects
-		const realPostMessage = (messageString) => {
-			console.log("[SidePanel] Sending message to background:", messageString.slice(0, 200) + "...")
+		const backendUrl = "ws://localhost:8001/ws"
+		let ws = null
+		let connected = false
+		let reconnectAttempts = 0
+		const maxReconnectAttempts = 5
 
-			try {
-				const message = JSON.parse(messageString)
+		// Track pending WebSocket connection promise
+		let connectionResolve = null
+		this.webSocketReady = new Promise((resolve) => {
+			connectionResolve = resolve
+		})
 
-				chrome.runtime.sendMessage(
-					{
-						type: "GRPC_REQUEST",
-						data: message,
-					},
-					(response) => {
-						if (chrome.runtime.lastError) {
-							console.error("[SidePanel] Chrome extension error:", chrome.runtime.lastError)
-							return
-						}
+		const connectWebSocket = () => {
+			console.log("[SidePanel] 🔌 Connecting to WebSocket:", backendUrl)
 
-						console.log("[SidePanel] Received response:", response?.success ? "Success" : "Failed")
+			ws = new WebSocket(backendUrl)
 
-						// Dispatch response back to React app
-						if (response?.success && response.data) {
-							// Log response details for debugging
-							if (response.data.type === "grpc_response") {
-								console.log("[SidePanel] gRPC response - request_id:", response.data.grpc_response?.request_id)
-							}
+			ws.onopen = () => {
+				console.log("[SidePanel] ✅ WebSocket connected - streaming enabled!")
+				connected = true
+				reconnectAttempts = 0
+				this.backendConnected = true
+				this.updateBackendStatus({
+					connected: true,
+					message: "Backend connected - Streaming enabled",
+				})
 
-							window.dispatchEvent(
-								new MessageEvent("message", {
-									data: response.data,
-								}),
-							)
-						} else if (response?.fallbackMode) {
-							// Handle backend unavailable state
-							window.dispatchEvent(
-								new MessageEvent("message", {
-									data: {
-										type: "backend_unavailable",
-										message: response.statusMessage,
-										setupInstructions: response.setupInstructions,
-									},
-								}),
-							)
-						} else {
-							// Handle general errors
-							window.dispatchEvent(
-								new MessageEvent("message", {
-									data: {
-										type: "error",
-										message: response?.error || "Unknown error",
-									},
-								}),
-							)
-						}
-					},
-				)
-			} catch (error) {
-				console.error("[SidePanel] Error parsing message:", error)
+				// Resolve the connection promise so React app can load
+				if (connectionResolve) {
+					connectionResolve()
+					connectionResolve = null
+				}
+
+				// Process any queued messages
+				if (window.__messageQueue && window.__messageQueue.length > 0) {
+					console.log(`[SidePanel] Processing ${window.__messageQueue.length} queued messages...`)
+					const queue = window.__messageQueue
+					window.__messageQueue = []
+					queue.forEach((msg) => {
+						console.log("[SidePanel] Processing queued message:", msg.slice(0, 100) + "...")
+						ws.send(msg)
+					})
+				}
+			}
+
+			ws.onmessage = (event) => {
+				try {
+					const data = JSON.parse(event.data)
+					console.log("[SidePanel] 📨 Received WebSocket message type:", data.type || "unknown")
+
+					// Dispatch to React app via window message event
+					// Timestamps are now normalized by the backend, no conversion needed
+					window.dispatchEvent(
+						new MessageEvent("message", {
+							data: data,
+						}),
+					)
+				} catch (error) {
+					console.error("[SidePanel] Error parsing WebSocket message:", error)
+				}
+			}
+
+			ws.onclose = () => {
+				console.log("[SidePanel] ❌ WebSocket disconnected")
+				connected = false
+				this.backendConnected = false
+
+				// Reset the connection promise for next reconnection
+				this.webSocketReady = new Promise((resolve) => {
+					connectionResolve = resolve
+				})
+
+				this.updateBackendStatus({
+					connected: false,
+					message: "Backend disconnected - Reconnecting...",
+				})
+
+				// Attempt to reconnect
+				if (reconnectAttempts < maxReconnectAttempts) {
+					reconnectAttempts++
+					const delay = Math.min(1000 * 2 ** reconnectAttempts, 10000)
+					console.log(
+						`[SidePanel] 🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`,
+					)
+					setTimeout(connectWebSocket, delay)
+				} else {
+					console.error("[SidePanel] ❌ Max reconnection attempts reached")
+					this.updateBackendStatus({
+						connected: false,
+						message: "Backend unavailable - Please check if services are running",
+					})
+				}
+			}
+
+			ws.onerror = (error) => {
+				console.error("[SidePanel] ❌ WebSocket error:", error)
 			}
 		}
 
-		// Replace the stub with the real implementation
-		window.chromeExtensionPostMessage = realPostMessage
-
-		// Process any messages that were queued before the real function was ready
-		if (window.__messageQueue && window.__messageQueue.length > 0) {
-			console.log(`[SidePanel] Processing ${window.__messageQueue.length} queued messages...`)
-			const queue = window.__messageQueue
-			window.__messageQueue = []
-			queue.forEach((msg) => {
-				console.log("[SidePanel] Processing queued message:", msg.slice(0, 100) + "...")
-				realPostMessage(msg)
-			})
+		// Create the global postMessage function that sends via WebSocket
+		const webSocketPostMessage = (messageString) => {
+			if (connected && ws && ws.readyState === WebSocket.OPEN) {
+				console.log("[SidePanel] 📤 Sending via WebSocket:", messageString.slice(0, 200) + "...")
+				ws.send(messageString)
+			} else {
+				console.log("[SidePanel] ⏳ WebSocket not ready, queueing message...")
+				window.__messageQueue.push(messageString)
+			}
 		}
 
-		// Set up platform configuration for chrome-extension mode
-		window.__PLATFORM__ = "chrome-extension"
+		// Replace the stub with WebSocket implementation
+		window.chromeExtensionPostMessage = webSocketPostMessage
 
-		console.log("[SidePanel] Message bridge initialized")
+		// Start WebSocket connection
+		connectWebSocket()
+
+		console.log("[SidePanel] Message bridge initialized with WebSocket")
 	}
 
 	async loadClineApp() {
 		console.log("[SidePanel] Loading Cline React app...")
-		this.updateLoadingText("Loading Cline interface...")
+		this.updateLoadingText("Waiting for backend connection...")
 
 		try {
-			// For now, we'll create a placeholder until the React app is bundled
-			// In the webpack build, this will load the actual cline-app.js bundle
+			// CRITICAL FIX: Wait for WebSocket connection before loading React app
+			// This prevents the "postMessage not found" race condition
+			console.log("[SidePanel] ⏳ Waiting for WebSocket to be ready...")
+			await this.webSocketReady
+			console.log("[SidePanel] ✅ WebSocket ready, proceeding with React app load")
 
-			// Check if the React app bundle is available
-			const appScript = document.createElement("script")
-			appScript.src = "cline-app.js"
-			appScript.onerror = () => {
-				console.log("[SidePanel] React app bundle not found, showing placeholder")
-				this.showPlaceholderApp()
-			}
-			appScript.onload = () => {
-				console.log("[SidePanel] React app loaded successfully")
-				this.appLoaded = true
-				this.hideLoading()
-			}
+			this.updateLoadingText("Loading dependencies...")
 
-			// Try to load the React app bundle
-			document.head.appendChild(appScript)
+			// STEP 1: Load vendor bundle first (React, dependencies, protobuf)
+			await this.loadScript("../shared/vendor.js", "Vendor bundle")
+			console.log("[SidePanel] ✅ Vendor bundle loaded")
 
-			// Fallback: show placeholder after timeout
-			setTimeout(() => {
-				if (!this.appLoaded) {
-					console.log("[SidePanel] React app load timeout, showing placeholder")
-					this.showPlaceholderApp()
-				}
-			}, 3000)
+			// STEP 2: Long class detection no longer needed (backend normalizes timestamps)
+			console.log("[SidePanel] ✅ Backend handles timestamp normalization")
+
+			this.updateLoadingText("Loading Cline interface...")
+
+			// STEP 3: Load the React app bundle
+			await this.loadScript("cline-app.js", "Cline app")
+			console.log("[SidePanel] ✅ React app loaded successfully")
+
+			this.appLoaded = true
+			this.hideLoading()
 		} catch (error) {
 			console.error("[SidePanel] Error loading React app:", error)
 			this.showPlaceholderApp()
 		}
+	}
+
+	/**
+	 * Load a script dynamically and return a promise
+	 */
+	async loadScript(src, name) {
+		return new Promise((resolve, reject) => {
+			const script = document.createElement("script")
+			script.src = src
+			script.async = false // Load in order
+
+			script.onload = () => {
+				console.log(`[SidePanel] ✅ ${name} loaded from ${src}`)
+				resolve()
+			}
+
+			script.onerror = (error) => {
+				console.error(`[SidePanel] ❌ Failed to load ${name} from ${src}:`, error)
+				reject(new Error(`Failed to load ${name}`))
+			}
+
+			document.head.appendChild(script)
+
+			// Timeout fallback
+			setTimeout(() => {
+				if (!script.onload) {
+					reject(new Error(`Timeout loading ${name}`))
+				}
+			}, 10000)
+		})
 	}
 
 	showPlaceholderApp() {
@@ -367,9 +434,41 @@ class SidePanelController {
 					window.clineApp.updatePageContext?.(message.data)
 				}
 				break
+			case "TASK_LOAD_REQUEST":
+				// Handle task load requests with debouncing
+				this.handleTaskLoadRequest(message.taskId)
+				break
 			default:
 				console.log("[SidePanel] Unknown message type:", message.type)
 		}
+	}
+
+	/**
+	 * Handle task load requests with debouncing to prevent reload loops.
+	 * This fixes the issue where opening a chat repeatedly reloads the same task.
+	 */
+	handleTaskLoadRequest(taskId) {
+		// If this is the current task, skip reload
+		if (this.currentTaskId === taskId && !this.taskLoadInProgress) {
+			console.log(`[SidePanel] Task ${taskId} already loaded, skipping reload`)
+			return
+		}
+
+		// If a task load is in progress, skip
+		if (this.taskLoadInProgress) {
+			console.log(`[SidePanel] Task load in progress, skipping request for ${taskId}`)
+			return
+		}
+
+		console.log(`[SidePanel] Loading task ${taskId}...`)
+		this.currentTaskId = taskId
+		this.taskLoadInProgress = true
+
+		// Reset flag after task load completes (with timeout)
+		setTimeout(() => {
+			this.taskLoadInProgress = false
+			console.log(`[SidePanel] Task load completed for ${taskId}`)
+		}, 2000)
 	}
 
 	showLoading(text) {

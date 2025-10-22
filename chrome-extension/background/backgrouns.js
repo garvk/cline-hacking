@@ -54,9 +54,6 @@ class ExtensionBackground {
 		// Check initial backend status
 		const status = await this.backendConnector.getConnectionStatus()
 		console.log("[Background] Initial backend status:", status)
-
-		// Note: WebSocket streaming is handled by the side panel directly
-		// Background script only monitors connection health via HTTP
 	}
 
 	async handleMessage(request, sender, sendResponse) {
