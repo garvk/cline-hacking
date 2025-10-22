@@ -145,9 +145,13 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 								minWidth: 0,
 								rowGap: 0,
 							}}>
-							<a
+							<span
 								className="github-link"
-								href={githubAuthorUrl}
+								onClick={(e) => {
+									e.preventDefault()
+									e.stopPropagation()
+									window.open(githubAuthorUrl, "_blank")
+								}}
 								onMouseEnter={(e) => {
 									e.currentTarget.style.opacity = "1"
 									e.currentTarget.style.color = "var(--link-active-foreground)"
@@ -164,6 +168,7 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 									opacity: 0.7,
 									textDecoration: "none",
 									border: "none !important",
+									cursor: "pointer",
 								}}>
 								<div ref={githubLinkRef} style={{ display: "flex", gap: "4px", alignItems: "center" }}>
 									<span className="codicon codicon-github" style={{ fontSize: "14px" }} />
@@ -177,7 +182,7 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 										{item.author}
 									</span>
 								</div>
-							</a>
+							</span>
 							<div
 								style={{
 									display: "flex",
