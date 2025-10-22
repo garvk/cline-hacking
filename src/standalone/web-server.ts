@@ -15,6 +15,7 @@ export class WebServer {
 	private wss: WebSocketServer
 	private controller: Controller
 	private port: number
+	private sseClients: Set<any> = new Set()
 
 	constructor(options: WebServerOptions) {
 		this.controller = options.controller
@@ -101,6 +102,77 @@ export class WebServer {
 			}
 		})
 
+		// Server-Sent Events endpoint for real-time updates (Chrome extension support)
+		this.app.get("/events", (req, res) => {
+			console.log("[WebServer] SSE client connected")
+
+			// Set SSE headers
+			res.writeHead(200, {
+				"Content-Type": "text/event-stream",
+				"Cache-Control": "no-cache",
+				Connection: "keep-alive",
+				"Access-Control-Allow-Origin": "*",
+				"Access-Control-Allow-Methods": "GET, OPTIONS",
+				"Access-Control-Allow-Headers": "Content-Type",
+			})
+
+			// CRITICAL: Send immediate connection confirmation to prevent timeout
+			res.write(": connected\n\n")
+			res.flushHeaders()
+
+			// Add client to set
+			this.sseClients.add(res)
+
+			// Send initial state with proper error handling
+			;(async () => {
+				try {
+					const state = await this.controller.getStateToPostToWebview()
+					// Check if connection is still open before sending
+					if (!res.writableEnded) {
+						this.sendSSEEvent(res, "state", state)
+						console.log("[WebServer] Initial state sent via SSE")
+					}
+				} catch (error) {
+					console.error("[WebServer] Error sending initial state via SSE:", error)
+					// Don't close connection on error, just log it
+				}
+			})()
+
+			// Send heartbeat every 30 seconds to keep connection alive
+			const heartbeatInterval = setInterval(() => {
+				try {
+					if (!res.writableEnded) {
+						res.write(": heartbeat\n\n")
+					} else {
+						clearInterval(heartbeatInterval)
+						this.sseClients.delete(res)
+					}
+				} catch (error) {
+					clearInterval(heartbeatInterval)
+					this.sseClients.delete(res)
+				}
+			}, 30000)
+
+			// Handle client disconnect
+			req.on("close", () => {
+				console.log("[WebServer] SSE client disconnected")
+				clearInterval(heartbeatInterval)
+				this.sseClients.delete(res)
+				if (!res.writableEnded) {
+					res.end()
+				}
+			})
+
+			req.on("error", (error) => {
+				console.error("[WebServer] SSE client error:", error)
+				clearInterval(heartbeatInterval)
+				this.sseClients.delete(res)
+				if (!res.writableEnded) {
+					res.end()
+				}
+			})
+		})
+
 		// Serve the standalone post message bridge script
 		this.app.get("/standalone-bridge.js", (req, res) => {
 			res.setHeader("Content-Type", "application/javascript")
@@ -179,6 +251,54 @@ export class WebServer {
 		})
 	}
 
+	/**
+	 * Recursively normalize timestamps in an object for JSON serialization.
+	 * Converts protobuf Long objects and plain {low, high, unsigned} objects to numbers.
+	 * This fixes the "Invalid timestamp in partial message" error in Chrome extension.
+	 */
+	private normalizeTimestampsForSerialization(obj: any): any {
+		if (obj === null || obj === undefined) {
+			return obj
+		}
+
+		// Check if this looks like a Long object (has low/high properties)
+		if (typeof obj === "object" && "low" in obj && "high" in obj) {
+			// Convert Long-like object to number
+			// For most timestamps, high will be 0 and low contains the actual value
+			const low = obj.low >>> 0 // Convert to unsigned
+			const high = obj.high >>> 0
+			const value = high * 0x100000000 + low
+			console.log(`[WebServer] 🔄 Normalized timestamp: {low:${obj.low}, high:${obj.high}} -> ${value}`)
+			return value
+		}
+
+		// Check if this has a toString() method that looks like a Long (protobuf Long objects)
+		if (typeof obj === "object" && typeof obj.toString === "function" && typeof obj.toNumber === "function") {
+			const value = obj.toNumber()
+			console.log(`[WebServer] 🔄 Normalized Long timestamp: ${obj.toString()} -> ${value}`)
+			return value
+		}
+
+		// Handle arrays
+		if (Array.isArray(obj)) {
+			return obj.map((item) => this.normalizeTimestampsForSerialization(item))
+		}
+
+		// Handle plain objects
+		if (typeof obj === "object") {
+			const normalized: any = {}
+			for (const key in obj) {
+				if (Object.hasOwn(obj, key)) {
+					normalized[key] = this.normalizeTimestampsForSerialization(obj[key])
+				}
+			}
+			return normalized
+		}
+
+		// Return primitives as-is
+		return obj
+	}
+
 	private setupWebSocket() {
 		this.wss.on("connection", (ws) => {
 			console.log("[WebServer] WebSocket client connected")
@@ -186,7 +306,10 @@ export class WebServer {
 			// Create a broadcast function for streaming updates with JSON safety
 			const postMessageToWebview = async (message: any): Promise<boolean | undefined> => {
 				try {
-					const serializedMessage = JSON.stringify(message)
+					// CRITICAL FIX: Normalize timestamps before JSON serialization
+					// This fixes the Chrome extension timestamp error
+					const normalizedMessage = this.normalizeTimestampsForSerialization(message)
+					const serializedMessage = JSON.stringify(normalizedMessage)
 					ws.send(serializedMessage)
 					return true
 				} catch (error) {
@@ -275,12 +398,15 @@ export class WebServer {
 				},
 			}
 
+			// Normalize timestamps before sending
+			const normalizedMessage = this.normalizeTimestampsForSerialization(stateMessage)
+
 			let sentCount = 0
 			this.wss.clients.forEach((client) => {
 				if (client.readyState === 1) {
 					// WebSocket.OPEN
 					try {
-						client.send(JSON.stringify(stateMessage))
+						client.send(JSON.stringify(normalizedMessage))
 						sentCount++
 					} catch (error) {
 						console.error("[WebServer] Error broadcasting to client:", error)
@@ -309,9 +435,12 @@ export class WebServer {
 				},
 			}
 
+			// Normalize timestamps before sending
+			const normalizedMessage = this.normalizeTimestampsForSerialization(stateMessage)
+
 			if (ws.readyState === 1) {
 				// WebSocket.OPEN
-				ws.send(JSON.stringify(stateMessage))
+				ws.send(JSON.stringify(normalizedMessage))
 				console.log("[WebServer] Initial state sent to new client")
 			}
 		} catch (error) {
@@ -358,12 +487,15 @@ export class WebServer {
 			},
 		}
 
+		// Normalize timestamps before sending
+		const normalizedMessage = this.normalizeTimestampsForSerialization(message)
+
 		let sentCount = 0
 		this.wss.clients.forEach((client) => {
 			if (client.readyState === 1) {
 				// WebSocket.OPEN
 				try {
-					client.send(JSON.stringify(message))
+					client.send(JSON.stringify(normalizedMessage))
 					sentCount++
 				} catch (error) {
 					console.error("[WebServer] Error broadcasting partial message:", error)
@@ -372,6 +504,61 @@ export class WebServer {
 		})
 
 		console.log(`[WebServer] Partial message broadcast sent to ${sentCount} clients`)
+	}
+
+	/**
+	 * Send SSE event to a single client
+	 */
+	private sendSSEEvent = (res: any, eventType: string, data: any) => {
+		try {
+			// Check if connection is still open
+			if (res.writableEnded) {
+				this.sseClients.delete(res)
+				return
+			}
+			const jsonData = JSON.stringify(data)
+			res.write(`event: ${eventType}\n`)
+			res.write(`data: ${jsonData}\n\n`)
+		} catch (error) {
+			console.error("[WebServer] Error sending SSE event:", error)
+			this.sseClients.delete(res)
+		}
+	}
+
+	/**
+	 * Broadcast SSE event to all connected SSE clients
+	 */
+	private broadcastSSEEvent = (eventType: string, data: any) => {
+		if (this.sseClients.size === 0) {
+			return
+		}
+
+		let sentCount = 0
+		this.sseClients.forEach((res) => {
+			try {
+				this.sendSSEEvent(res, eventType, data)
+				sentCount++
+			} catch (error) {
+				console.error("[WebServer] Error broadcasting SSE event to client:", error)
+				this.sseClients.delete(res)
+			}
+		})
+
+		if (sentCount > 0) {
+			console.log(`[WebServer] SSE event '${eventType}' sent to ${sentCount} clients`)
+		}
+	}
+
+	/**
+	 * Broadcast state updates to SSE clients (for Chrome extension real-time updates)
+	 */
+	private broadcastStateToSSEClients = async () => {
+		try {
+			const state = await this.controller.getStateToPostToWebview()
+			this.broadcastSSEEvent("update", state)
+		} catch (error) {
+			console.error("[WebServer] Error broadcasting state to SSE clients:", error)
+		}
 	}
 
 	private async handleMessage(message: any): Promise<any> {
