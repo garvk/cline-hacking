@@ -571,12 +571,123 @@ export class WebServer {
 
 	private async handleMcpService(method: string, requestData: any, isStreaming: boolean): Promise<any> {
 		switch (method) {
-			case "subscribeToMcpServers":
-				// Return current MCP servers
-				return { mcpServers: [] } // TODO: Get actual MCP servers from controller
-			case "subscribeToMcpMarketplaceCatalog":
+			case "subscribeToMcpServers": {
+				// Get current MCP servers from controller
+				const mcpServers = await this.controller.mcpHub?.getLatestMcpServersRPC()
+				console.log(`[WebServer] Retrieved ${mcpServers?.length || 0} MCP servers`)
+				const { convertMcpServersToProtoMcpServers } = await import("@shared/proto-conversions/mcp/mcp-server-conversion")
+				const { McpServers } = await import("@shared/proto/cline/mcp")
+				return McpServers.create({
+					mcpServers: convertMcpServersToProtoMcpServers(mcpServers || []),
+				})
+			}
+
+			case "getLatestMcpServers": {
+				// Get latest MCP servers state
+				const mcpServers = await this.controller.mcpHub?.getLatestMcpServersRPC()
+				console.log(`[WebServer] Retrieved latest ${mcpServers?.length || 0} MCP servers`)
+				const { convertMcpServersToProtoMcpServers } = await import("@shared/proto-conversions/mcp/mcp-server-conversion")
+				const { McpServers } = await import("@shared/proto/cline/mcp")
+				return McpServers.create({
+					mcpServers: convertMcpServersToProtoMcpServers(mcpServers || []),
+				})
+			}
+
+			case "toggleMcpServer": {
+				// Toggle server enabled/disabled state
+				const { serverName, disabled } = requestData
+				console.log(`[WebServer] Toggling MCP server ${serverName} to ${disabled ? "disabled" : "enabled"}`)
+				const mcpServers = await this.controller.mcpHub?.toggleServerDisabledRPC(serverName, disabled)
+				const { convertMcpServersToProtoMcpServers } = await import("@shared/proto-conversions/mcp/mcp-server-conversion")
+				const { McpServers } = await import("@shared/proto/cline/mcp")
+				return McpServers.create({
+					mcpServers: convertMcpServersToProtoMcpServers(mcpServers || []),
+				})
+			}
+
+			case "restartMcpServer": {
+				// Restart an MCP server connection
+				const serverName = requestData.value
+				console.log(`[WebServer] Restarting MCP server: ${serverName}`)
+				const mcpServers = await this.controller.mcpHub?.restartConnectionRPC(serverName)
+				const { convertMcpServersToProtoMcpServers } = await import("@shared/proto-conversions/mcp/mcp-server-conversion")
+				const { McpServers } = await import("@shared/proto/cline/mcp")
+				return McpServers.create({
+					mcpServers: convertMcpServersToProtoMcpServers(mcpServers || []),
+				})
+			}
+
+			case "deleteMcpServer": {
+				// Delete an MCP server
+				const serverName = requestData.value
+				console.log(`[WebServer] Deleting MCP server: ${serverName}`)
+				const mcpServers = await this.controller.mcpHub?.deleteServerRPC(serverName)
+				const { convertMcpServersToProtoMcpServers } = await import("@shared/proto-conversions/mcp/mcp-server-conversion")
+				const { McpServers } = await import("@shared/proto/cline/mcp")
+				return McpServers.create({
+					mcpServers: convertMcpServersToProtoMcpServers(mcpServers || []),
+				})
+			}
+
+			case "addRemoteMcpServer": {
+				// Add a new remote MCP server
+				const { serverName, serverUrl } = requestData
+				console.log(`[WebServer] Adding remote MCP server: ${serverName} at ${serverUrl}`)
+				const mcpServers = await this.controller.mcpHub?.addRemoteServer(serverName, serverUrl)
+				const { convertMcpServersToProtoMcpServers } = await import("@shared/proto-conversions/mcp/mcp-server-conversion")
+				const { McpServers } = await import("@shared/proto/cline/mcp")
+				return McpServers.create({
+					mcpServers: convertMcpServersToProtoMcpServers(mcpServers || []),
+				})
+			}
+
+			case "updateMcpTimeout": {
+				// Update server timeout
+				const { serverName, timeout } = requestData
+				console.log(`[WebServer] Updating MCP server ${serverName} timeout to ${timeout}`)
+				const mcpServers = await this.controller.mcpHub?.updateServerTimeoutRPC(serverName, timeout)
+				const { convertMcpServersToProtoMcpServers } = await import("@shared/proto-conversions/mcp/mcp-server-conversion")
+				const { McpServers } = await import("@shared/proto/cline/mcp")
+				return McpServers.create({
+					mcpServers: convertMcpServersToProtoMcpServers(mcpServers || []),
+				})
+			}
+
+			case "toggleToolAutoApprove": {
+				// Toggle tool auto-approve
+				const { serverName, toolNames, autoApprove } = requestData
+				console.log(`[WebServer] Toggling auto-approve for ${toolNames.length} tools on ${serverName}`)
+				const mcpServers = await this.controller.mcpHub?.toggleToolAutoApproveRPC(serverName, toolNames, autoApprove)
+				const { convertMcpServersToProtoMcpServers } = await import("@shared/proto-conversions/mcp/mcp-server-conversion")
+				const { McpServers } = await import("@shared/proto/cline/mcp")
+				return McpServers.create({
+					mcpServers: convertMcpServersToProtoMcpServers(mcpServers || []),
+				})
+			}
+
+			case "subscribeToMcpMarketplaceCatalog": {
 				// Return marketplace catalog
-				return { items: [] } // TODO: Get actual catalog
+				// TODO: Implement marketplace integration
+				const { McpMarketplaceCatalog } = await import("@shared/proto/cline/mcp")
+				return McpMarketplaceCatalog.create({ items: [] })
+			}
+
+			case "refreshMcpMarketplace": {
+				// Refresh marketplace catalog
+				// TODO: Implement marketplace refresh
+				const { McpMarketplaceCatalog } = await import("@shared/proto/cline/mcp")
+				return McpMarketplaceCatalog.create({ items: [] })
+			}
+
+			case "openMcpSettings": {
+				// Open MCP settings file
+				console.log(`[WebServer] Opening MCP settings`)
+				// In web version, we can't open files directly
+				// Return the settings file path for the frontend to handle
+				const { Empty } = await import("@shared/proto/cline/common")
+				return Empty.create()
+			}
+
 			default:
 				console.warn(`[WebServer] Unhandled McpService method: ${method}`)
 				return {}
