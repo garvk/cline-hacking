@@ -2,6 +2,7 @@ const path = require("path")
 const webpack = require("webpack")
 const CopyWebpackPlugin = require("copy-webpack-plugin")
 const { CleanWebpackPlugin } = require("clean-webpack-plugin")
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 
 module.exports = (env, argv) => {
 	const isProduction = argv.mode === "production"
@@ -113,10 +114,10 @@ module.exports = (env, argv) => {
 					},
 				},
 
-				// CSS files
+				// CSS files - extract to separate file for extension
 				{
 					test: /\.css$/,
-					use: ["style-loader", "css-loader", "postcss-loader"],
+					use: [MiniCssExtractPlugin.loader, "css-loader", "postcss-loader"],
 				},
 
 				// Images and fonts
@@ -134,6 +135,11 @@ module.exports = (env, argv) => {
 			// Clean dist directory
 			new CleanWebpackPlugin(),
 
+			// Extract CSS to separate file
+			new MiniCssExtractPlugin({
+				filename: "[name].css",
+			}),
+
 			// Copy static files
 			new CopyWebpackPlugin({
 				patterns: [
@@ -147,6 +153,12 @@ module.exports = (env, argv) => {
 					{
 						from: "chrome-extension/sidepanel/sidepanel.html",
 						to: "sidepanel/sidepanel.html",
+					},
+
+					// Copy platform-init.js
+					{
+						from: "chrome-extension/sidepanel/platform-init.js",
+						to: "sidepanel/platform-init.js",
 					},
 
 					// Copy extension icons

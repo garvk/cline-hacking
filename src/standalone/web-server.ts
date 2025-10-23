@@ -15,6 +15,10 @@ export class WebServer {
 	private wss: WebSocketServer
 	private controller: Controller
 	private port: number
+
+	// DEPRECATED: SSE is no longer used - Chrome extension uses WebSocket exclusively
+	// This is kept for backward compatibility with potential standalone browser clients
+	// TODO: Consider removing in future version after confirming no active SSE clients
 	private sseClients: Set<any> = new Set()
 
 	constructor(options: WebServerOptions) {
@@ -102,7 +106,10 @@ export class WebServer {
 			}
 		})
 
-		// Server-Sent Events endpoint for real-time updates (Chrome extension support)
+		// DEPRECATED: Server-Sent Events endpoint - NO LONGER USED
+		// Chrome extension now uses WebSocket exclusively (see sidepanel.js)
+		// This endpoint is kept for backward compatibility only
+		// TODO: Remove this endpoint in a future version after deprecation period
 		this.app.get("/events", (req, res) => {
 			console.log("[WebServer] SSE client connected")
 
@@ -254,9 +261,17 @@ export class WebServer {
 	/**
 	 * Recursively normalize timestamps in an object for JSON serialization.
 	 * Converts protobuf Long objects and plain {low, high, unsigned} objects to numbers.
+	 * Also fixes invalid timestamps (ts <= 0) by replacing them with current time.
 	 * This fixes the "Invalid timestamp in partial message" error in Chrome extension.
 	 */
-	private normalizeTimestampsForSerialization(obj: any): any {
+	private normalizeTimestampsForSerialization(obj: any, depth: number = 0): any {
+		// DIAGNOSTIC: Log entry at depth 0
+		if (depth === 0) {
+			console.log(
+				`[DIAGNOSTIC] normalizeTimestampsForSerialization ENTRY - type: ${typeof obj}, isArray: ${Array.isArray(obj)}`,
+			)
+		}
+
 		if (obj === null || obj === undefined) {
 			return obj
 		}
@@ -281,7 +296,7 @@ export class WebServer {
 
 		// Handle arrays
 		if (Array.isArray(obj)) {
-			return obj.map((item) => this.normalizeTimestampsForSerialization(item))
+			return obj.map((item) => this.normalizeTimestampsForSerialization(item, depth + 1))
 		}
 
 		// Handle plain objects
@@ -289,7 +304,37 @@ export class WebServer {
 			const normalized: any = {}
 			for (const key in obj) {
 				if (Object.hasOwn(obj, key)) {
-					normalized[key] = this.normalizeTimestampsForSerialization(obj[key])
+					// Special handling for 'ts' timestamp fields
+					if (key === "ts") {
+						const originalValue = obj[key]
+						const valueType = typeof originalValue
+
+						// DIAGNOSTIC: Log EVERY ts field we encounter, no depth restriction
+						console.log(
+							`[DIAGNOSTIC] normalizeTimestamps - Found 'ts' at depth ${depth}: value=${originalValue}, type=${valueType}, messageType=${obj.type || "unknown"}, say=${obj.say}, ask=${obj.ask}`,
+						)
+
+						if (valueType === "number") {
+							// If timestamp is invalid (0 or negative), use current time
+							if (originalValue <= 0) {
+								const currentTime = Date.now()
+								console.warn(
+									`[WebServer] ⚠️ Fixed invalid timestamp in ${obj.type || "unknown"} message: ${originalValue} -> ${currentTime}`,
+								)
+								normalized[key] = currentTime
+							} else {
+								normalized[key] = originalValue
+							}
+						} else {
+							// Non-number ts field - log warning and try to fix
+							console.warn(
+								`[WebServer] ⚠️ ts field is not a number! type=${valueType}, value=${originalValue}, in ${obj.type || "unknown"}`,
+							)
+							normalized[key] = this.normalizeTimestampsForSerialization(originalValue, depth + 1)
+						}
+					} else {
+						normalized[key] = this.normalizeTimestampsForSerialization(obj[key], depth + 1)
+					}
 				}
 			}
 			return normalized
@@ -335,35 +380,43 @@ export class WebServer {
 						} else {
 							// Fallback for non-gRPC messages
 							const response = await this.handleMessage(message)
-							const serializedResponse = JSON.stringify(response)
+							// CRITICAL FIX: Normalize timestamps before sending
+							const normalizedResponse = this.normalizeTimestampsForSerialization(response)
+							const serializedResponse = JSON.stringify(normalizedResponse)
 							ws.send(serializedResponse)
 							console.log("[WebServer] Non-gRPC response sent successfully")
 						}
 					} catch (error) {
 						console.error("[WebServer] Error handling gRPC request:", error)
 
-						// Send error response
-						const errorResponse = JSON.stringify({
+						// Send error response with timestamp normalization
+						const errorResponseObj = {
 							type: "grpc_response",
 							grpc_response: {
 								request_id: message?.grpc_request?.request_id || "unknown",
 								error: error instanceof Error ? error.message : "Request handling failed",
 								is_streaming: false,
 							},
-						})
+						}
+						// CRITICAL FIX: Normalize timestamps before sending error response
+						const normalizedError = this.normalizeTimestampsForSerialization(errorResponseObj)
+						const errorResponse = JSON.stringify(normalizedError)
 						ws.send(errorResponse)
 						console.log("[WebServer] Error response sent")
 					}
 				} catch (error) {
 					console.error("[WebServer] WebSocket message error:", error)
-					const errorResponse = JSON.stringify({
+					const errorResponseObj = {
 						type: "grpc_response",
 						grpc_response: {
 							request_id: "unknown",
 							error: error instanceof Error ? error.message : "Unknown error",
 							is_streaming: false,
 						},
-					})
+					}
+					// CRITICAL FIX: Normalize timestamps before sending error response
+					const normalizedError = this.normalizeTimestampsForSerialization(errorResponseObj)
+					const errorResponse = JSON.stringify(normalizedError)
 					ws.send(errorResponse)
 					console.log("[WebServer] Error response sent")
 				}
@@ -507,7 +560,9 @@ export class WebServer {
 	}
 
 	/**
-	 * Send SSE event to a single client
+	 * DEPRECATED: Send SSE event to a single client
+	 * This method is no longer used by Chrome extension (uses WebSocket instead)
+	 * Kept for backward compatibility only
 	 */
 	private sendSSEEvent = (res: any, eventType: string, data: any) => {
 		try {
@@ -526,7 +581,9 @@ export class WebServer {
 	}
 
 	/**
-	 * Broadcast SSE event to all connected SSE clients
+	 * DEPRECATED: Broadcast SSE event to all connected SSE clients
+	 * This method is no longer used by Chrome extension (uses WebSocket instead)
+	 * Kept for backward compatibility only
 	 */
 	private broadcastSSEEvent = (eventType: string, data: any) => {
 		if (this.sseClients.size === 0) {
@@ -550,7 +607,9 @@ export class WebServer {
 	}
 
 	/**
-	 * Broadcast state updates to SSE clients (for Chrome extension real-time updates)
+	 * DEPRECATED: Broadcast state updates to SSE clients
+	 * This method is no longer used - Chrome extension uses WebSocket for real-time updates
+	 * Kept for backward compatibility only
 	 */
 	private broadcastStateToSSEClients = async () => {
 		try {
@@ -632,6 +691,7 @@ export class WebServer {
 					console.log(`- Task history count: ${state.taskHistory?.length || 0}`)
 					console.log(`- Welcome completed: ${state.welcomeViewCompleted}`)
 					console.log(`- User info: ${!!state.userInfo}`)
+
 					return { stateJson: JSON.stringify(state) }
 				} catch (error) {
 					console.error("[WebServer] Error getting state from controller:", error)
@@ -641,6 +701,7 @@ export class WebServer {
 				console.log("[WebServer] Getting latest state from controller...")
 				const latestState = await this.controller.getStateToPostToWebview()
 				console.log("[WebServer] Latest state retrieved successfully")
+
 				return { stateJson: JSON.stringify(latestState) }
 			case "togglePlanActModeProto":
 				const { mode, chatContent } = requestData

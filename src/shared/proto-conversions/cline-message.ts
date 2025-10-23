@@ -154,6 +154,11 @@ function convertProtoEnumToClineSay(say: ClineSay): AppClineSay | undefined {
  * Convert application ClineMessage to proto ClineMessage
  */
 export function convertClineMessageToProto(message: AppClineMessage): ProtoClineMessage {
+	// DIAGNOSTIC: Log timestamp at proto conversion
+	console.log(
+		`[DIAGNOSTIC] convertClineMessageToProto - ts: ${message.ts}, type: ${typeof message.ts}, say: ${message.say}, ask: ${message.ask}, partial: ${message.partial}`,
+	)
+
 	// For sending messages, we need to provide values for required proto fields
 	const askEnum = message.ask ? convertClineAskToProtoEnum(message.ask) : undefined
 	const sayEnum = message.say ? convertClineSayToProtoEnum(message.say) : undefined

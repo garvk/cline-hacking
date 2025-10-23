@@ -420,9 +420,20 @@ export const ExtensionStateContextProvider: React.FC<{
 		partialMessageUnsubscribeRef.current = UiServiceClient.subscribeToPartialMessage(EmptyRequest.create({}), {
 			onResponse: (protoMessage) => {
 				try {
+					// Debug logging: log the raw message before any validation
+					console.log("[FRONTEND DEBUG] Received partial message:", {
+						ts: protoMessage.ts,
+						tsType: typeof protoMessage.ts,
+						type: protoMessage.type,
+						say: protoMessage.say,
+						partial: protoMessage.partial,
+						fullMessage: protoMessage,
+					})
+
 					// Validate critical fields
 					if (!protoMessage.ts || protoMessage.ts <= 0) {
-						console.error("Invalid timestamp in partial message:", protoMessage)
+						console.error("[FRONTEND ERROR] Invalid timestamp in partial message:", protoMessage)
+						console.error("[FRONTEND ERROR] ts value:", protoMessage.ts, "type:", typeof protoMessage.ts)
 						return
 					}
 

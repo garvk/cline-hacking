@@ -1,287 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Cline AI Assistant</title>
-		
-		<!-- CRITICAL: Define chromeExtensionPostMessage stub EARLY to prevent race condition -->
-		<!-- External script to avoid CSP violations -->
-		<script src="platform-init.js"></script>
-  <style>
-    /* Base styles for side panel */
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      min-width: 400px;
-      height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background-color: var(--vscode-editor-background, #1e1e1e);
-      color: var(--vscode-editor-foreground, #cccccc);
-      overflow: hidden;
-    }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cline AI Assistant</title>
     
-    /* Backend connection status bar */
-    .backend-status {
-      padding: 8px 12px;
-      font-size: 12px;
-      font-weight: 500;
-      border-bottom: 1px solid var(--vscode-panel-border, #404040);
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 32px;
-      box-sizing: border-box;
-    }
+    <!-- Compiled CSS from webpack -->
+    <link rel="stylesheet" href="../shared/vendor.css">
+    <link rel="stylesheet" href="cline-app.css">
     
-    .backend-connected {
-      background-color: #d1ecf1;
-      color: #0c5460;
-      border-left: 3px solid #17a2b8;
-    }
-    
-    .backend-disconnected {
-      background-color: #fff3cd;
-      color: #856404;
-      border-left: 3px solid #ffc107;
-    }
-    
-    .backend-error {
-      background-color: #f8d7da;
-      color: #721c24;
-      border-left: 3px solid #dc3545;
-    }
-    
-    .status-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 8px;
-    }
-    
-    .status-connected { background-color: #28a745; }
-    .status-disconnected { background-color: #ffc107; }
-    .status-error { background-color: #dc3545; }
-    
-    .status-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .status-button {
-      background: none;
-      border: 1px solid currentColor;
-      color: inherit;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .status-button:hover {
-      background-color: rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Main app container */
-    #cline-root {
-      width: 100%;
-      height: calc(100vh - 32px); /* Subtract status bar height */
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    
-    /* Loading state */
-    .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      text-align: center;
-      padding: 20px;
-    }
-    
-    .loading-spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #007acc;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 16px;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .loading-text {
-      color: #888;
-      font-size: 14px;
-      margin-bottom: 8px;
-    }
-    
-    .loading-details {
-      color: #666;
-      font-size: 12px;
-      max-width: 300px;
-      line-height: 1.4;
-    }
-    
-    /* Setup instructions */
-    .setup-container {
-      padding: 20px;
-      max-width: 500px;
-      margin: 0 auto;
-      line-height: 1.5;
-    }
-    
-    .setup-title {
-      color: #ffc107;
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-    }
-    
-    .setup-description {
-      color: #ccc;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-    
-    .setup-steps {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    
-    .setup-step {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      padding: 16px;
-      margin-bottom: 12px;
-    }
-    
-    .setup-step-title {
-      color: #4fc3f7;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    
-    .setup-step-command {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      padding: 8px 12px;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 12px;
-      color: #a5d6ff;
-      margin: 8px 0;
-      word-break: break-all;
-    }
-    
-    .fallback-features {
-      background: rgba(40, 167, 69, 0.1);
-      border: 1px solid rgba(40, 167, 69, 0.3);
-      border-radius: 6px;
-      padding: 16px;
-      margin-top: 20px;
-    }
-    
-    .fallback-features h4 {
-      color: #28a745;
-      margin: 0 0 12px 0;
-      font-size: 14px;
-    }
-    
-    .fallback-features ul {
-      margin: 0;
-      padding-left: 16px;
-      font-size: 12px;
-    }
-    
-    .fallback-features li {
-      margin-bottom: 4px;
-      line-height: 1.3;
-    }
-  </style>
+    <!-- Chrome-specific styles for sidebar constraints -->
+    <style>
+        /* Ensure the app fills the sidepanel height */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        /* Root container should be a flex column that fills height */
+        #root {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Ensure scrollable areas work properly in Chrome sidepanel */
+        [data-scrollable="true"] {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        /* Chrome sidepanel specific: handle narrow width (350px-450px) */
+        @media (max-width: 500px) {
+            /* Ensure buttons don't overflow */
+            .button-group {
+                flex-wrap: wrap;
+            }
+            
+            /* Ensure inputs don't overflow */
+            input, textarea {
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Backend connection status bar -->
-  <div id="backend-status" class="backend-status backend-disconnected">
-    <div class="status-info">
-      <span id="status-indicator" class="status-indicator status-disconnected"></span>
-      <span id="status-text">Checking connection...</span>
-    </div>
-    <div class="status-actions">
-      <button id="retry-connection" class="status-button" style="display: none;">Retry</button>
-      <button id="show-setup" class="status-button" style="display: none;">Setup</button>
-    </div>
-  </div>
-
-  <!-- React app root - this is where the Cline app will mount -->
-  <div id="root"></div>
-  
-  <!-- Cline root for legacy compatibility -->
-  <div id="cline-root"></div>
-
-  <!-- Setup instructions template (hidden by default) -->
-  <div id="setup-template" style="display: none;">
-    <div class="setup-container">
-      <div class="setup-title">
-        <span class="status-indicator status-disconnected"></span>
-        Backend Setup Required
-      </div>
-      <div class="setup-description">
-        To enable full AI chat functionality, please start the Cline backend services in your terminal:
-      </div>
-      <ol class="setup-steps">
-        <li class="setup-step">
-          <div class="setup-step-title">1. Start Hostbridge Service</div>
-          <div class="setup-step-command">cd dist-standalone/extension && ./cli/bin/cline-host --port 26041 --verbose</div>
-          <div style="font-size: 12px; color: #888;">Handles file system and terminal operations</div>
-        </li>
-        <li class="setup-step">
-          <div class="setup-step-title">2. Start Cline Core Service</div>
-          <div class="setup-step-command">cd dist-standalone && node cline-core.js --port 8080 --host-bridge-port 26041</div>
-          <div style="font-size: 12px; color: #888;">Provides AI chat and gRPC services</div>
-        </li>
-        <li class="setup-step">
-          <div class="setup-step-title">3. Verify Connection</div>
-          <div class="setup-step-command">curl http://localhost:8001/health</div>
-          <div style="font-size: 12px; color: #888;">Should return {"status":"ok"} when services are running</div>
-        </li>
-      </ol>
-      
-      <div class="fallback-features">
-        <h4>Available Without Backend:</h4>
-        <ul>
-          <li>✅ Webpage interaction (reading, clicking, form filling)</li>
-          <li>✅ Browser-based file operations</li>
-          <li>✅ Basic text editing and note-taking</li>
-          <li>❌ AI chat (requires backend)</li>
-          <li>❌ Advanced file operations</li>
-          <li>❌ Terminal access</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- CRITICAL: Load platform-init.js first (already in head) -->
-  <!-- Then load sidepanel controller - it will dynamically load React when ready -->
-  <script src="sidepanel.js"></script>
-  
-  <!-- DO NOT load vendor.js or cline-app.js here -->
-  <!-- sidepanel.js will load them dynamically after WebSocket is ready -->
+    <div id="root"></div>
+    
+    <!-- Platform initialization for Chrome extension -->
+    <script src="platform-init.js"></script>
+    
+    <!-- Load vendor dependencies first -->
+    <script src="../shared/vendor.js"></script>
+    
+    <!-- Load React app bundle -->
+    <script src="cline-app.js"></script>
+    
+    <!-- Load sidepanel controller -->
+    <script src="sidepanel.js"></script>
 </body>
 </html>

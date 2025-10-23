@@ -589,6 +589,12 @@ export class Task {
 					lastMessage.images = images
 					lastMessage.files = files
 					lastMessage.partial = partial
+
+					// DIAGNOSTIC: Log before converting and sending partial update
+					console.log(
+						`[DIAGNOSTIC] Task.say() - Updating partial message: ts=${lastMessage.ts}, type=${typeof lastMessage.ts}, say=${type}`,
+					)
+
 					const protoMessage = convertClineMessageToProto(lastMessage)
 					await sendPartialMessageEvent(protoMessage)
 					return undefined
@@ -596,6 +602,12 @@ export class Task {
 					// this is a new partial message, so add it with partial state
 					const sayTs = Date.now()
 					this.taskState.lastMessageTs = sayTs
+
+					// DIAGNOSTIC: Log new partial message creation
+					console.log(
+						`[DIAGNOSTIC] Task.say() - Creating NEW partial message: ts=${sayTs}, type=${typeof sayTs}, say=${type}`,
+					)
+
 					await this.messageStateHandler.addToClineMessages({
 						ts: sayTs,
 						type: "say",
@@ -2211,7 +2223,7 @@ export class Task {
 							type: "text",
 							text: assistantMessage,
 							// reasoning_details only exists for cline/openrouter providers
-							// @ts-ignore-next-line
+							// @ts-expect-error-next-line
 							reasoning_details: reasoningDetails.length > 0 ? reasoningDetails : undefined,
 						},
 					] as Array<

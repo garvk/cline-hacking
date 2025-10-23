@@ -3,7 +3,7 @@
 
 export class BackendConnector {
 	constructor() {
-		this.backendUrl = "http://localhost:8001"
+		this.backendUrl = "http://localhost:8080"
 		this.connected = false
 		this.connectionCheckInterval = null
 		this.retryCount = 0
@@ -266,7 +266,7 @@ export class BackendConnector {
 				},
 				{
 					title: "Verify Connection",
-					command: "curl http://localhost:8001/health",
+					command: "curl http://localhost:8080/health",
 					description: 'Should return {"status":"ok"} when services are running',
 				},
 			],

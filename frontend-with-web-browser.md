@@ -412,6 +412,13 @@ rm -rf extension standalone  # Clean previous build
 unzip standalone.zip
 mv standalone/extension .
 cd ..
+
+
+OR 
+
+use 
+
+npm run compile-standalone
 ```
 
 ### Full Testing Sequence
@@ -427,6 +434,7 @@ cd dist-standalone/extension && ./cli/bin/cline-host --port 26041 --verbose
 
 # Terminal 2 - Cline Core + Web Server (with new changes)  
 cd dist-standalone && node cline-core.js --port 8080 --host-bridge-port 26041
+cd dist-standalone && node cline-core.js --host-bridge-port 26041
 
 # Terminal 3 - Frontend Dev Server
 cd webview-ui && PLATFORM=standalone npm run dev --host
