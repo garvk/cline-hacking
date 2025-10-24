@@ -17,57 +17,16 @@ class SidePanelController {
 
 		try {
 			// Initialize WebSocket connection for backend communication
+			// All gRPC requests (including subscriptions) will go through WebSocket
 			this.initializeMessageBridge()
 
-			// Fetch and dispatch initial state before React app mounts
-			await this.fetchAndDispatchInitialState()
+			// Wait for WebSocket to be ready before allowing React to mount
+			await this.webSocketReady
+			console.log("[SidePanel] ✅ WebSocket ready - React app can now mount and create subscriptions")
 
 			console.log("[SidePanel] ✅ Initialization complete - React app will mount automatically")
 		} catch (error) {
 			console.error("[SidePanel] Initialization failed:", error)
-		}
-	}
-
-	/**
-	 * Proactively fetch and dispatch initial state to prevent race condition.
-	 * This ensures state is available when React's ExtensionStateContext initializes.
-	 */
-	async fetchAndDispatchInitialState() {
-		console.log("[SidePanel] 🚀 Fetching initial state proactively...")
-
-		try {
-			// Wait for WebSocket to be ready first
-			await this.webSocketReady
-
-			const response = await chrome.runtime.sendMessage({
-				type: "GRPC_REQUEST",
-				data: {
-					type: "grpc_request",
-					grpc_request: {
-						service: "cline.StateService",
-						method: "subscribeToState",
-						message: {},
-						request_id: "initial_state_preload",
-						is_streaming: false,
-					},
-				},
-			})
-
-			if (response?.success && response.data?.grpc_response?.message?.stateJson) {
-				console.log("[SidePanel] ✅ Initial state fetched successfully!")
-
-				// Dispatch to window for React app
-				window.dispatchEvent(
-					new MessageEvent("message", {
-						data: response.data,
-					}),
-				)
-
-				console.log("[SidePanel] ✅ Initial state dispatched - React app will find it ready!")
-			}
-		} catch (error) {
-			console.error("[SidePanel] ❌ Failed to fetch initial state:", error)
-			// Don't throw - React app will handle missing state gracefully
 		}
 	}
 
