@@ -16,6 +16,11 @@ export class WebServer {
 	private controller: Controller
 	private port: number
 
+	// DEPRECATED: SSE is no longer used - Chrome extension uses WebSocket exclusively
+	// This is kept for backward compatibility with potential standalone browser clients
+	// TODO: Consider removing in future version after confirming no active SSE clients
+	private sseClients: Set<any> = new Set()
+
 	constructor(options: WebServerOptions) {
 		this.controller = options.controller
 		this.port = options.port
@@ -101,6 +106,80 @@ export class WebServer {
 			}
 		})
 
+		// DEPRECATED: Server-Sent Events endpoint - NO LONGER USED
+		// Chrome extension now uses WebSocket exclusively (see sidepanel.js)
+		// This endpoint is kept for backward compatibility only
+		// TODO: Remove this endpoint in a future version after deprecation period
+		this.app.get("/events", (req, res) => {
+			console.log("[WebServer] SSE client connected")
+
+			// Set SSE headers
+			res.writeHead(200, {
+				"Content-Type": "text/event-stream",
+				"Cache-Control": "no-cache",
+				Connection: "keep-alive",
+				"Access-Control-Allow-Origin": "*",
+				"Access-Control-Allow-Methods": "GET, OPTIONS",
+				"Access-Control-Allow-Headers": "Content-Type",
+			})
+
+			// CRITICAL: Send immediate connection confirmation to prevent timeout
+			res.write(": connected\n\n")
+			res.flushHeaders()
+
+			// Add client to set
+			this.sseClients.add(res)
+
+			// Send initial state with proper error handling
+			;(async () => {
+				try {
+					const state = await this.controller.getStateToPostToWebview()
+					// Check if connection is still open before sending
+					if (!res.writableEnded) {
+						this.sendSSEEvent(res, "state", state)
+						console.log("[WebServer] Initial state sent via SSE")
+					}
+				} catch (error) {
+					console.error("[WebServer] Error sending initial state via SSE:", error)
+					// Don't close connection on error, just log it
+				}
+			})()
+
+			// Send heartbeat every 30 seconds to keep connection alive
+			const heartbeatInterval = setInterval(() => {
+				try {
+					if (!res.writableEnded) {
+						res.write(": heartbeat\n\n")
+					} else {
+						clearInterval(heartbeatInterval)
+						this.sseClients.delete(res)
+					}
+				} catch (error) {
+					clearInterval(heartbeatInterval)
+					this.sseClients.delete(res)
+				}
+			}, 30000)
+
+			// Handle client disconnect
+			req.on("close", () => {
+				console.log("[WebServer] SSE client disconnected")
+				clearInterval(heartbeatInterval)
+				this.sseClients.delete(res)
+				if (!res.writableEnded) {
+					res.end()
+				}
+			})
+
+			req.on("error", (error) => {
+				console.error("[WebServer] SSE client error:", error)
+				clearInterval(heartbeatInterval)
+				this.sseClients.delete(res)
+				if (!res.writableEnded) {
+					res.end()
+				}
+			})
+		})
+
 		// Serve the standalone post message bridge script
 		this.app.get("/standalone-bridge.js", (req, res) => {
 			res.setHeader("Content-Type", "application/javascript")
@@ -179,6 +258,92 @@ export class WebServer {
 		})
 	}
 
+	/**
+	 * Recursively normalize timestamps in an object for JSON serialization.
+	 * Converts protobuf Long objects and plain {low, high, unsigned} objects to numbers.
+	 * Also fixes invalid timestamps (ts <= 0) by replacing them with current time.
+	 * This fixes the "Invalid timestamp in partial message" error in Chrome extension.
+	 */
+	private normalizeTimestampsForSerialization(obj: any, depth: number = 0): any {
+		// DIAGNOSTIC: Log entry at depth 0
+		if (depth === 0) {
+			console.log(
+				`[DIAGNOSTIC] normalizeTimestampsForSerialization ENTRY - type: ${typeof obj}, isArray: ${Array.isArray(obj)}`,
+			)
+		}
+
+		if (obj === null || obj === undefined) {
+			return obj
+		}
+
+		// Check if this looks like a Long object (has low/high properties)
+		if (typeof obj === "object" && "low" in obj && "high" in obj) {
+			// Convert Long-like object to number
+			// For most timestamps, high will be 0 and low contains the actual value
+			const low = obj.low >>> 0 // Convert to unsigned
+			const high = obj.high >>> 0
+			const value = high * 0x100000000 + low
+			console.log(`[WebServer] 🔄 Normalized timestamp: {low:${obj.low}, high:${obj.high}} -> ${value}`)
+			return value
+		}
+
+		// Check if this has a toString() method that looks like a Long (protobuf Long objects)
+		if (typeof obj === "object" && typeof obj.toString === "function" && typeof obj.toNumber === "function") {
+			const value = obj.toNumber()
+			console.log(`[WebServer] 🔄 Normalized Long timestamp: ${obj.toString()} -> ${value}`)
+			return value
+		}
+
+		// Handle arrays
+		if (Array.isArray(obj)) {
+			return obj.map((item) => this.normalizeTimestampsForSerialization(item, depth + 1))
+		}
+
+		// Handle plain objects
+		if (typeof obj === "object") {
+			const normalized: any = {}
+			for (const key in obj) {
+				if (Object.hasOwn(obj, key)) {
+					// Special handling for 'ts' timestamp fields
+					if (key === "ts") {
+						const originalValue = obj[key]
+						const valueType = typeof originalValue
+
+						// DIAGNOSTIC: Log EVERY ts field we encounter, no depth restriction
+						console.log(
+							`[DIAGNOSTIC] normalizeTimestamps - Found 'ts' at depth ${depth}: value=${originalValue}, type=${valueType}, messageType=${obj.type || "unknown"}, say=${obj.say}, ask=${obj.ask}`,
+						)
+
+						if (valueType === "number") {
+							// If timestamp is invalid (0 or negative), use current time
+							if (originalValue <= 0) {
+								const currentTime = Date.now()
+								console.warn(
+									`[WebServer] ⚠️ Fixed invalid timestamp in ${obj.type || "unknown"} message: ${originalValue} -> ${currentTime}`,
+								)
+								normalized[key] = currentTime
+							} else {
+								normalized[key] = originalValue
+							}
+						} else {
+							// Non-number ts field - log warning and try to fix
+							console.warn(
+								`[WebServer] ⚠️ ts field is not a number! type=${valueType}, value=${originalValue}, in ${obj.type || "unknown"}`,
+							)
+							normalized[key] = this.normalizeTimestampsForSerialization(originalValue, depth + 1)
+						}
+					} else {
+						normalized[key] = this.normalizeTimestampsForSerialization(obj[key], depth + 1)
+					}
+				}
+			}
+			return normalized
+		}
+
+		// Return primitives as-is
+		return obj
+	}
+
 	private setupWebSocket() {
 		this.wss.on("connection", (ws) => {
 			console.log("[WebServer] WebSocket client connected")
@@ -186,7 +351,15 @@ export class WebServer {
 			// Create a broadcast function for streaming updates with JSON safety
 			const postMessageToWebview = async (message: any): Promise<boolean | undefined> => {
 				try {
-					const serializedMessage = JSON.stringify(message)
+					// DIAGNOSTIC: Log what we're about to send
+					const isStreaming = message?.grpc_response?.is_streaming
+					const requestId = message?.grpc_response?.request_id
+					console.log(`[WebServer] 📤 Sending response: request_id=${requestId}, is_streaming=${isStreaming}`)
+
+					// CRITICAL FIX: Normalize timestamps before JSON serialization
+					// This fixes the Chrome extension timestamp error
+					const normalizedMessage = this.normalizeTimestampsForSerialization(message)
+					const serializedMessage = JSON.stringify(normalizedMessage)
 					ws.send(serializedMessage)
 					return true
 				} catch (error) {
@@ -207,40 +380,58 @@ export class WebServer {
 					try {
 						const { handleGrpcRequest } = await import("../core/controller/grpc-handler")
 						if (message.type === "grpc_request" && message.grpc_request) {
+							// DIAGNOSTIC: Log what kind of request this is
+							console.log(
+								`[WebServer] 🔍 Processing ${message.grpc_request.is_streaming ? "STREAMING" : "UNARY"} request: ${message.grpc_request.service}.${message.grpc_request.method}`,
+							)
+
 							// Use the full gRPC handler that supports both streaming and non-streaming
 							await handleGrpcRequest(this.controller, postMessageToWebview, message.grpc_request)
+
+							// DIAGNOSTIC: Log when handler completes
+							console.log(
+								`[WebServer] ✅ Handler completed for: ${message.grpc_request.service}.${message.grpc_request.method}`,
+							)
 						} else {
 							// Fallback for non-gRPC messages
 							const response = await this.handleMessage(message)
-							const serializedResponse = JSON.stringify(response)
+							// CRITICAL FIX: Normalize timestamps before sending
+							const normalizedResponse = this.normalizeTimestampsForSerialization(response)
+							const serializedResponse = JSON.stringify(normalizedResponse)
 							ws.send(serializedResponse)
 							console.log("[WebServer] Non-gRPC response sent successfully")
 						}
 					} catch (error) {
 						console.error("[WebServer] Error handling gRPC request:", error)
 
-						// Send error response
-						const errorResponse = JSON.stringify({
+						// Send error response with timestamp normalization
+						const errorResponseObj = {
 							type: "grpc_response",
 							grpc_response: {
 								request_id: message?.grpc_request?.request_id || "unknown",
 								error: error instanceof Error ? error.message : "Request handling failed",
 								is_streaming: false,
 							},
-						})
+						}
+						// CRITICAL FIX: Normalize timestamps before sending error response
+						const normalizedError = this.normalizeTimestampsForSerialization(errorResponseObj)
+						const errorResponse = JSON.stringify(normalizedError)
 						ws.send(errorResponse)
 						console.log("[WebServer] Error response sent")
 					}
 				} catch (error) {
 					console.error("[WebServer] WebSocket message error:", error)
-					const errorResponse = JSON.stringify({
+					const errorResponseObj = {
 						type: "grpc_response",
 						grpc_response: {
 							request_id: "unknown",
 							error: error instanceof Error ? error.message : "Unknown error",
 							is_streaming: false,
 						},
-					})
+					}
+					// CRITICAL FIX: Normalize timestamps before sending error response
+					const normalizedError = this.normalizeTimestampsForSerialization(errorResponseObj)
+					const errorResponse = JSON.stringify(normalizedError)
 					ws.send(errorResponse)
 					console.log("[WebServer] Error response sent")
 				}
@@ -275,12 +466,15 @@ export class WebServer {
 				},
 			}
 
+			// Normalize timestamps before sending
+			const normalizedMessage = this.normalizeTimestampsForSerialization(stateMessage)
+
 			let sentCount = 0
 			this.wss.clients.forEach((client) => {
 				if (client.readyState === 1) {
 					// WebSocket.OPEN
 					try {
-						client.send(JSON.stringify(stateMessage))
+						client.send(JSON.stringify(normalizedMessage))
 						sentCount++
 					} catch (error) {
 						console.error("[WebServer] Error broadcasting to client:", error)
@@ -309,9 +503,12 @@ export class WebServer {
 				},
 			}
 
+			// Normalize timestamps before sending
+			const normalizedMessage = this.normalizeTimestampsForSerialization(stateMessage)
+
 			if (ws.readyState === 1) {
 				// WebSocket.OPEN
-				ws.send(JSON.stringify(stateMessage))
+				ws.send(JSON.stringify(normalizedMessage))
 				console.log("[WebServer] Initial state sent to new client")
 			}
 		} catch (error) {
@@ -358,12 +555,15 @@ export class WebServer {
 			},
 		}
 
+		// Normalize timestamps before sending
+		const normalizedMessage = this.normalizeTimestampsForSerialization(message)
+
 		let sentCount = 0
 		this.wss.clients.forEach((client) => {
 			if (client.readyState === 1) {
 				// WebSocket.OPEN
 				try {
-					client.send(JSON.stringify(message))
+					client.send(JSON.stringify(normalizedMessage))
 					sentCount++
 				} catch (error) {
 					console.error("[WebServer] Error broadcasting partial message:", error)
@@ -372,6 +572,67 @@ export class WebServer {
 		})
 
 		console.log(`[WebServer] Partial message broadcast sent to ${sentCount} clients`)
+	}
+
+	/**
+	 * DEPRECATED: Send SSE event to a single client
+	 * This method is no longer used by Chrome extension (uses WebSocket instead)
+	 * Kept for backward compatibility only
+	 */
+	private sendSSEEvent = (res: any, eventType: string, data: any) => {
+		try {
+			// Check if connection is still open
+			if (res.writableEnded) {
+				this.sseClients.delete(res)
+				return
+			}
+			const jsonData = JSON.stringify(data)
+			res.write(`event: ${eventType}\n`)
+			res.write(`data: ${jsonData}\n\n`)
+		} catch (error) {
+			console.error("[WebServer] Error sending SSE event:", error)
+			this.sseClients.delete(res)
+		}
+	}
+
+	/**
+	 * DEPRECATED: Broadcast SSE event to all connected SSE clients
+	 * This method is no longer used by Chrome extension (uses WebSocket instead)
+	 * Kept for backward compatibility only
+	 */
+	private broadcastSSEEvent = (eventType: string, data: any) => {
+		if (this.sseClients.size === 0) {
+			return
+		}
+
+		let sentCount = 0
+		this.sseClients.forEach((res) => {
+			try {
+				this.sendSSEEvent(res, eventType, data)
+				sentCount++
+			} catch (error) {
+				console.error("[WebServer] Error broadcasting SSE event to client:", error)
+				this.sseClients.delete(res)
+			}
+		})
+
+		if (sentCount > 0) {
+			console.log(`[WebServer] SSE event '${eventType}' sent to ${sentCount} clients`)
+		}
+	}
+
+	/**
+	 * DEPRECATED: Broadcast state updates to SSE clients
+	 * This method is no longer used - Chrome extension uses WebSocket for real-time updates
+	 * Kept for backward compatibility only
+	 */
+	private broadcastStateToSSEClients = async () => {
+		try {
+			const state = await this.controller.getStateToPostToWebview()
+			this.broadcastSSEEvent("update", state)
+		} catch (error) {
+			console.error("[WebServer] Error broadcasting state to SSE clients:", error)
+		}
 	}
 
 	private async handleMessage(message: any): Promise<any> {
@@ -445,6 +706,7 @@ export class WebServer {
 					console.log(`- Task history count: ${state.taskHistory?.length || 0}`)
 					console.log(`- Welcome completed: ${state.welcomeViewCompleted}`)
 					console.log(`- User info: ${!!state.userInfo}`)
+
 					return { stateJson: JSON.stringify(state) }
 				} catch (error) {
 					console.error("[WebServer] Error getting state from controller:", error)
@@ -454,6 +716,7 @@ export class WebServer {
 				console.log("[WebServer] Getting latest state from controller...")
 				const latestState = await this.controller.getStateToPostToWebview()
 				console.log("[WebServer] Latest state retrieved successfully")
+
 				return { stateJson: JSON.stringify(latestState) }
 			case "togglePlanActModeProto":
 				const { mode, chatContent } = requestData
@@ -490,10 +753,10 @@ export class WebServer {
 				await this.controller.postStateToWebview()
 				return {}
 			case "subscribeToPartialMessage":
-				// CRITICAL: This is what enables real-time AI response streaming
-				console.log(`[WebServer] Setting up partial message streaming subscription`)
-				this.setupPartialMessageStreaming()
-				return {}
+				// CRITICAL FIX: Don't intercept - this case should NEVER be reached via WebSocket
+				// WebSocket connections use handleGrpcRequest which routes to the real backend handler
+				// This case is only here for the deprecated HTTP fallback, and should throw an error
+				throw new Error("subscribeToPartialMessage must use WebSocket streaming, not HTTP fallback")
 			case "subscribeToMcpButtonClicked":
 			case "subscribeToHistoryButtonClicked":
 			case "subscribeToChatButtonClicked":

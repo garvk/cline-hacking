@@ -1646,9 +1646,9 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						/>
 					)}
 					<div
-						className="absolute flex items-end bottom-4.5 right-5 z-10 h-8 text-xs"
+						className="absolute flex items-end bottom-4.5 right-5 z-10 h-8 text-xs justify-end w-12"
 						style={{ height: textAreaBaseHeight }}>
-						<div className="flex flex-row items-center">
+						<div className="flex flex-row items-center justify-end">
 							{dictationSettings?.dictationEnabled === true && dictationSettings?.featureEnabled && (
 								<VoiceRecorder
 									disabled={sendingDisabled}

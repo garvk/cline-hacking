@@ -120,6 +120,13 @@ async function handleStreamingRequest(
 		isLast: boolean = false,
 		sequenceNumber?: number,
 	) => {
+		// DIAGNOSTIC: Log before sending to postMessageToWebview
+		const tsValue = response?.ts
+		const tsType = typeof tsValue
+		console.log(
+			`[DIAGNOSTIC] grpc-handler responseStream - ts: ${tsValue}, type: ${tsType}, isLast: ${isLast}, request_id: ${request.request_id}`,
+		)
+
 		await postMessageToWebview({
 			type: "grpc_response",
 			grpc_response: {

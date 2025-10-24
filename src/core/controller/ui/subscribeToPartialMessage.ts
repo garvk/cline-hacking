@@ -38,6 +38,11 @@ export async function subscribeToPartialMessage(
  * @param partialMessage The ClineMessage to send
  */
 export async function sendPartialMessageEvent(partialMessage: ClineMessage): Promise<void> {
+	// DIAGNOSTIC: Log before sending to subscribers
+	console.log(
+		`[DIAGNOSTIC] sendPartialMessageEvent - ts: ${partialMessage.ts}, type: ${typeof partialMessage.ts}, subscribers: ${activePartialMessageSubscriptions.size}`,
+	)
+
 	// Send the event to all active subscribers
 	const promises = Array.from(activePartialMessageSubscriptions).map(async (responseStream) => {
 		try {

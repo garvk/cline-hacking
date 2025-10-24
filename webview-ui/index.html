@@ -14,21 +14,13 @@
 			function loadStandaloneBridge() {
 				console.log('[Bridge Loader] Attempting to load standalone bridge...');
 				const script = document.createElement('script');
-				script.src = 'http://localhost:8001/standalone-bridge.js';
+				script.src = 'http://localhost:8080/standalone-bridge.js';
 				script.onload = function() {
 					console.log('[Bridge Loader] Bridge script loaded successfully');
 				};
 				script.onerror = function() {
-					console.warn('[Bridge Loader] Failed to load bridge from localhost:8001, trying localhost:8080');
-					const fallbackScript = document.createElement('script');
-					fallbackScript.src = 'http://localhost:8080/standalone-bridge.js';
-					fallbackScript.onload = function() {
-						console.log('[Bridge Loader] Bridge script loaded from fallback');
-					};
-					fallbackScript.onerror = function() {
-						console.error('[Bridge Loader] Failed to load standalone bridge script from both ports');
-					};
-					document.head.appendChild(fallbackScript);
+					console.error('[Bridge Loader] Failed to load standalone bridge script from localhost:8080');
+					// Note: This script is only for standalone/web mode, not for Chrome extension
 				};
 				document.head.appendChild(script);
 			}

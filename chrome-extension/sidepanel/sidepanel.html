@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cline AI Assistant</title>
+    
+    <!-- Compiled CSS from webpack -->
+    <link rel="stylesheet" href="../shared/vendor.css">
+    <link rel="stylesheet" href="cline-app.css">
+    
+    <!-- Chrome-specific styles for sidebar constraints -->
+    <style>
+        /* Ensure the app fills the sidepanel height */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        /* Root container should be a flex column that fills height */
+        #root {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Ensure scrollable areas work properly in Chrome sidepanel */
+        [data-scrollable="true"] {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        /* Chrome sidepanel specific: handle narrow width (350px-450px) */
+        @media (max-width: 500px) {
+            /* Ensure buttons don't overflow */
+            .button-group {
+                flex-wrap: wrap;
+            }
+            
+            /* Ensure inputs don't overflow */
+            input, textarea {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- Platform initialization for Chrome extension -->
+    <script src="platform-init.js"></script>
+    
+    <!-- Load vendor dependencies first -->
+    <script src="../shared/vendor.js"></script>
+    
+    <!-- Load React app bundle -->
+    <script src="cline-app.js"></script>
+    
+    <!-- Load sidepanel controller -->
+    <script src="sidepanel.js"></script>
+</body>
+</html>
