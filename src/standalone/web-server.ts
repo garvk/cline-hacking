@@ -351,6 +351,11 @@ export class WebServer {
 			// Create a broadcast function for streaming updates with JSON safety
 			const postMessageToWebview = async (message: any): Promise<boolean | undefined> => {
 				try {
+					// DIAGNOSTIC: Log what we're about to send
+					const isStreaming = message?.grpc_response?.is_streaming
+					const requestId = message?.grpc_response?.request_id
+					console.log(`[WebServer] 📤 Sending response: request_id=${requestId}, is_streaming=${isStreaming}`)
+
 					// CRITICAL FIX: Normalize timestamps before JSON serialization
 					// This fixes the Chrome extension timestamp error
 					const normalizedMessage = this.normalizeTimestampsForSerialization(message)
@@ -375,8 +380,18 @@ export class WebServer {
 					try {
 						const { handleGrpcRequest } = await import("../core/controller/grpc-handler")
 						if (message.type === "grpc_request" && message.grpc_request) {
+							// DIAGNOSTIC: Log what kind of request this is
+							console.log(
+								`[WebServer] 🔍 Processing ${message.grpc_request.is_streaming ? "STREAMING" : "UNARY"} request: ${message.grpc_request.service}.${message.grpc_request.method}`,
+							)
+
 							// Use the full gRPC handler that supports both streaming and non-streaming
 							await handleGrpcRequest(this.controller, postMessageToWebview, message.grpc_request)
+
+							// DIAGNOSTIC: Log when handler completes
+							console.log(
+								`[WebServer] ✅ Handler completed for: ${message.grpc_request.service}.${message.grpc_request.method}`,
+							)
 						} else {
 							// Fallback for non-gRPC messages
 							const response = await this.handleMessage(message)
@@ -738,10 +753,10 @@ export class WebServer {
 				await this.controller.postStateToWebview()
 				return {}
 			case "subscribeToPartialMessage":
-				// CRITICAL: This is what enables real-time AI response streaming
-				console.log(`[WebServer] Setting up partial message streaming subscription`)
-				this.setupPartialMessageStreaming()
-				return {}
+				// CRITICAL FIX: Don't intercept - this case should NEVER be reached via WebSocket
+				// WebSocket connections use handleGrpcRequest which routes to the real backend handler
+				// This case is only here for the deprecated HTTP fallback, and should throw an error
+				throw new Error("subscribeToPartialMessage must use WebSocket streaming, not HTTP fallback")
 			case "subscribeToMcpButtonClicked":
 			case "subscribeToHistoryButtonClicked":
 			case "subscribeToChatButtonClicked":

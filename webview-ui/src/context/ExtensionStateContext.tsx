@@ -430,11 +430,16 @@ export const ExtensionStateContextProvider: React.FC<{
 						fullMessage: protoMessage,
 					})
 
-					// Validate critical fields
+					// IGNORE initialization messages with invalid timestamps
+					// These are default protobuf messages sent during subscription setup
+					// Don't close subscription, just skip these messages
 					if (!protoMessage.ts || protoMessage.ts <= 0) {
-						console.error("[FRONTEND ERROR] Invalid timestamp in partial message:", protoMessage)
-						console.error("[FRONTEND ERROR] ts value:", protoMessage.ts, "type:", typeof protoMessage.ts)
-						return
+						console.warn(
+							"[FRONTEND] Ignoring initialization message with invalid timestamp (ts:",
+							protoMessage.ts,
+							")",
+						)
+						return // Continue subscription, just skip this message
 					}
 
 					const partialMessage = convertProtoToClineMessage(protoMessage)
@@ -456,7 +461,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				console.error("Error in partialMessage subscription:", error)
 			},
 			onComplete: () => {
-				console.log("[DEBUG] partialMessage subscription completed")
+				console.log("[DEBUG] partialMessage subscription completed (this should not happen for long-lived subscriptions)")
 			},
 		})
 
