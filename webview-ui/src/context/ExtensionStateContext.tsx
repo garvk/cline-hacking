@@ -420,10 +420,26 @@ export const ExtensionStateContextProvider: React.FC<{
 		partialMessageUnsubscribeRef.current = UiServiceClient.subscribeToPartialMessage(EmptyRequest.create({}), {
 			onResponse: (protoMessage) => {
 				try {
-					// Validate critical fields
+					// Debug logging: log the raw message before any validation
+					console.log("[FRONTEND DEBUG] Received partial message:", {
+						ts: protoMessage.ts,
+						tsType: typeof protoMessage.ts,
+						type: protoMessage.type,
+						say: protoMessage.say,
+						partial: protoMessage.partial,
+						fullMessage: protoMessage,
+					})
+
+					// IGNORE initialization messages with invalid timestamps
+					// These are default protobuf messages sent during subscription setup
+					// Don't close subscription, just skip these messages
 					if (!protoMessage.ts || protoMessage.ts <= 0) {
-						console.error("Invalid timestamp in partial message:", protoMessage)
-						return
+						console.warn(
+							"[FRONTEND] Ignoring initialization message with invalid timestamp (ts:",
+							protoMessage.ts,
+							")",
+						)
+						return // Continue subscription, just skip this message
 					}
 
 					const partialMessage = convertProtoToClineMessage(protoMessage)
@@ -445,7 +461,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				console.error("Error in partialMessage subscription:", error)
 			},
 			onComplete: () => {
-				console.log("[DEBUG] partialMessage subscription completed")
+				console.log("[DEBUG] partialMessage subscription completed (this should not happen for long-lived subscriptions)")
 			},
 		})
 

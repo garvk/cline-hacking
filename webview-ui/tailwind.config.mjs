@@ -12,6 +12,12 @@ export default {
 			fontFamily: {
 				"azeret-mono": ['"Azeret Mono"', "monospace"],
 			},
+			screens: {
+				"chrome-sidebar": "350px", // Chrome extension sidebar width
+			},
+			spacing: {
+				"chrome-safe": "12px", // Safe margin for Chrome UI elements
+			},
 			colors: {
 				background: "var(--vscode-editor-background)",
 				border: {

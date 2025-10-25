@@ -6,14 +6,16 @@ tmp
 .vscode-test/
 *.vsix
 
-chrome-extension/
-dist-extension/
-
+# chrome-extension/
+# dist-extension/
+task-docs/
 .DS_Store
 .idea
+chrome-ext-streaming-implementation.md
 
 pnpm-lock.yaml
-
+dist-extension/
+chrome-extension-dev/
 .clineignore
 .venv
 .actrc

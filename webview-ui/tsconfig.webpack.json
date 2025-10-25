@@ -1,0 +1,42 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": [
+			"ES2022",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"module": "ESNext",
+		"skipLibCheck": true,
+		"moduleResolution": "node",
+		"isolatedModules": true,
+		"moduleDetection": "force",
+		"noEmit": false,
+		"jsx": "react-jsx",
+		"strict": true,
+		"noFallthroughCasesInSwitch": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": [
+				"src/*"
+			],
+			"@components/*": [
+				"src/components/*"
+			],
+			"@context/*": [
+				"src/context/*"
+			],
+			"@utils/*": [
+				"src/utils/*"
+			],
+			"@shared/*": [
+				"../src/shared/*"
+			]
+		}
+	},
+	"include": [
+		"src"
+	]
+}

@@ -401,6 +401,7 @@ This alternative approach is particularly useful for developers working in corpo
 
 ### Quick Rebuild Process
 
+# for first time install node packages inside webview-ui, dist-standalone and root directory (using npm install)
 ```bash
 # 1. Rebuild standalone package
 npm run compile-standalone:single
@@ -411,19 +412,29 @@ rm -rf extension standalone  # Clean previous build
 unzip standalone.zip
 mv standalone/extension .
 cd ..
+
+
+OR 
+
+use 
+
+npm run compile-standalone
 ```
 
 ### Full Testing Sequence
 
 ```bash
 # Terminal 1 - Test Hostbridge Service
-# for first time install node packages inside webview-ui, dist-standalone and root directory
+
+npx tsx scripts/test-hostbridge-server.ts
+OR
 npx tsx scripts/test-hostbridge-server.ts > /dev/null 2>&1 &
 OR
 cd dist-standalone/extension && ./cli/bin/cline-host --port 26041 --verbose
 
 # Terminal 2 - Cline Core + Web Server (with new changes)  
 cd dist-standalone && node cline-core.js --port 8080 --host-bridge-port 26041
+cd dist-standalone && node cline-core.js --host-bridge-port 26041
 
 # Terminal 3 - Frontend Dev Server
 cd webview-ui && PLATFORM=standalone npm run dev --host

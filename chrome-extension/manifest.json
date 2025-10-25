@@ -1,0 +1,61 @@
+{
+	"manifest_version": 3,
+	"name": "Cline AI Assistant",
+	"version": "1.0.0",
+	"description": "AI coding assistant with webpage interaction capabilities",
+
+	"permissions": [
+		"sidePanel",
+		"storage",
+		"activeTab",
+		"scripting",
+		"management"
+	],
+
+	"host_permissions": [
+		"http://localhost:25463/*",
+		"http://localhost:8080/*",
+		"https://*/*",
+		"http://*/*"
+	],
+
+	"background": {
+		"service_worker": "background/background.js",
+		"type": "module"
+	},
+
+	"side_panel": {
+		"default_path": "sidepanel/sidepanel.html"
+	},
+
+	"action": {
+		"default_title": "Open Cline AI Assistant",
+		"default_icon": {
+			"16": "assets/icons/icon16.png",
+			"48": "assets/icons/icon48.png",
+			"128": "assets/icons/icon128.png"
+		}
+	},
+
+	"icons": {
+		"16": "assets/icons/icon16.png",
+		"48": "assets/icons/icon48.png",
+		"128": "assets/icons/icon128.png"
+	},
+
+	"web_accessible_resources": [
+		{
+			"resources": [
+				"shared/*",
+				"assets/*"
+			],
+			"matches": [
+				"<all_urls>"
+			]
+		}
+	],
+
+	"content_security_policy": {
+		"extension_pages": "script-src 'self' http://localhost:25463 http://localhost:8080; object-src 'self'; connect-src 'self' http://localhost:25463 http://localhost:8080 ws://localhost:25463 ws://localhost:8080 wss://localhost:25463 wss://localhost:8080"
+	}
+}

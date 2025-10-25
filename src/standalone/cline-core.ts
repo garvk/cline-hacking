@@ -78,7 +78,7 @@ async function main() {
 		log(`Registered instance in SQLite locks: ${protobusAddress}`)
 
 		//  Start web server
-		const webPort = 8001
+		const webPort = args.webPort || 8080
 		webServer = new WebServer({
 			port: webPort,
 			controller: webviewProvider.controller,
@@ -89,7 +89,7 @@ async function main() {
 		globalLockManager.touchInstance()
 
 		log("✅ All services started successfully")
-		log("Open browser to: http://localhost:25463")
+		log(`Open browser to: http://localhost:${webPort}`)
 	} catch (err) {
 		log(`FATAL ERROR during startup: ${err}`)
 		log(`Cleaning up and shutting down...`)
@@ -243,6 +243,7 @@ async function shutdownGracefully(lockManager?: SqliteLockManager) {
 interface CliArgs {
 	port?: number
 	hostBridgePort?: number
+	webPort?: number
 	config?: string
 	help?: boolean
 }
@@ -260,6 +261,9 @@ function parseArgs(): CliArgs {
 				break
 			case "--host-bridge-port":
 				args.hostBridgePort = parseInt(argv[++i], 10)
+				break
+			case "--web-port":
+				args.webPort = parseInt(argv[++i], 10)
 				break
 			case "--config":
 			case "-c":
@@ -284,12 +288,21 @@ Usage: node cline-core.js [options]
 Options:
   -p, --port <port>              Port for the main gRPC service (default: ${PROTOBUS_PORT})
   --host-bridge-port <port>      Port for the host bridge service (default: ${HOSTBRIDGE_PORT})
+  --web-port <port>              Port for the HTTP/WebSocket server (default: 8080)
   -c, --config <path>            Directory for Cline data storage (default: ~/.cline)
   -h, --help                     Show this help message
 
 Environment Variables:
   PROTOBUS_ADDRESS              Override the main service address (format: host:port)
   HOST_BRIDGE_ADDRESS            Override the host bridge address (format: host:port)
+
+Example:
+  node cline-core.js --web-port 8080 --host-bridge-port 26041
+  
+  This will start:
+  - HTTP/WebSocket server on port 8080 (for web Cline and Chrome extension)
+  - gRPC service on port ${PROTOBUS_PORT} (for internal communication)
+  - Host bridge service on port 26041 (for VSCode integration)
 `)
 }
 
