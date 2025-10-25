@@ -37,12 +37,32 @@ class ExtensionBackground {
 		})
 	}
 
-	setupSidePanel() {
+	async setupSidePanel() {
+		// Detect if running in development mode (unpacked extension)
+		const isDevMode = await this.isDevMode()
+		const htmlFile = isDevMode ? "sidepanel/sidepanel-dev.html" : "sidepanel/sidepanel.html"
+
+		console.log(`[Background] Setting up side panel in ${isDevMode ? "DEV" : "PRODUCTION"} mode`)
+		console.log(`[Background] Loading: ${htmlFile}`)
+
 		chrome.sidePanel.setOptions({
 			tabId: undefined,
-			path: "sidepanel/sidepanel.html",
+			path: htmlFile,
 			enabled: true,
 		})
+	}
+
+	async isDevMode() {
+		// Check if extension is loaded as unpacked (development mode)
+		try {
+			const info = await chrome.management.getSelf()
+			const isDev = info.installType === "development"
+			console.log(`[Background] Extension install type: ${info.installType}`)
+			return isDev
+		} catch (error) {
+			console.warn("[Background] Could not detect install type, assuming production")
+			return false
+		}
 	}
 
 	async initializeExtension() {

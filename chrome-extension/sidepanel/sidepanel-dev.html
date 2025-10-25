@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cline AI Assistant (Dev Mode)</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+        .dev-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            font-size: 11px;
+            border-radius: 3px;
+            z-index: 10000;
+            font-family: monospace;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="dev-indicator">DEV MODE</div>
+    
+    <!-- Load entire app from Vite dev server -->
+    <iframe 
+        src="http://localhost:25463/index.html" 
+        allow="*"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+    ></iframe>
+    
+    <script>
+        console.log('[Chrome Extension Dev] Loading from Vite dev server at http://localhost:25463');
+        console.log('[Chrome Extension Dev] Backend expected at http://localhost:8080');
+        
+        // Monitor iframe load status
+        const iframe = document.querySelector('iframe');
+        iframe.addEventListener('load', () => {
+            console.log('[Chrome Extension Dev] Vite app loaded successfully');
+        });
+        
+        iframe.addEventListener('error', (e) => {
+            console.error('[Chrome Extension Dev] Failed to load Vite app:', e);
+            document.body.innerHTML = `
+                <div style="padding: 20px; font-family: sans-serif;">
+                    <h2 style="color: #d32f2f;">Development Server Not Running</h2>
+                    <p>Failed to load the Vite development server.</p>
+                    <p><strong>Please ensure:</strong></p>
+                    <ol>
+                        <li>Backend is running: <code>npm run dev:standalone</code></li>
+                        <li>Vite dev server is running: <code>cd webview-ui && npm run dev</code></li>
+                    </ol>
+                    <p>Expected URLs:</p>
+                    <ul>
+                        <li>Vite: <a href="http://localhost:25463">http://localhost:25463</a></li>
+                        <li>Backend: <a href="http://localhost:8080">http://localhost:8080</a></li>
+                    </ul>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>

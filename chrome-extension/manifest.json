@@ -8,11 +8,13 @@
 		"sidePanel",
 		"storage",
 		"activeTab",
-		"scripting"
+		"scripting",
+		"management"
 	],
 
 	"host_permissions": [
-		"http://localhost/*",
+		"http://localhost:25463/*",
+		"http://localhost:8080/*",
 		"https://*/*",
 		"http://*/*"
 	],
@@ -54,6 +56,6 @@
 	],
 
 	"content_security_policy": {
-		"extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*"
+		"extension_pages": "script-src 'self' http://localhost:25463 http://localhost:8080; object-src 'self'; connect-src 'self' http://localhost:25463 http://localhost:8080 ws://localhost:25463 ws://localhost:8080 wss://localhost:25463 wss://localhost:8080"
 	}
 }

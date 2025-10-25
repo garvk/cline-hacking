@@ -1,17 +1,10 @@
 // Platform Initialization for Chrome Extension
 // This file must load BEFORE any other scripts to prevent race conditions
 
-// Define platform type
-window.__PLATFORM__ = "chrome-extension"
+// Define platform type - but use "standalone" to share code path
+window.__PLATFORM__ = "standalone"
 
-// Create a message queue for early messages
-window.__messageQueue = []
+// The standalone-bridge.js (loaded from backend) will create window.standalonePostMessage
+// No need to create stub here - the bridge loads immediately after this script
 
-// Temporary stub - will be replaced by sidepanel.js once WebSocket connects
-// This prevents "postMessage not found" errors during React initialization
-window.chromeExtensionPostMessage = (msg) => {
-	console.log("[Platform Init] chromeExtensionPostMessage called before WebSocket ready, queueing...")
-	window.__messageQueue.push(msg)
-}
-
-console.log("[Platform Init] Chrome extension environment initialized")
+console.log("[Platform Init] Chrome extension environment initialized (using standalone code path)")
