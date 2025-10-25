@@ -38,9 +38,9 @@ class ExtensionBackground {
 	}
 
 	async setupSidePanel() {
-		// Detect if running in development mode (unpacked extension)
+		// Check if dev HTML exists (true dev mode vs production build being tested)
 		const isDevMode = await this.isDevMode()
-		const htmlFile = isDevMode ? "sidepanel/sidepanel-dev.html" : "sidepanel/sidepanel.html"
+		const htmlFile = isDevMode ? "sidepanel/sidepanel-dev.html" : "sidepanel/index.html"
 
 		console.log(`[Background] Setting up side panel in ${isDevMode ? "DEV" : "PRODUCTION"} mode`)
 		console.log(`[Background] Loading: ${htmlFile}`)
@@ -53,14 +53,15 @@ class ExtensionBackground {
 	}
 
 	async isDevMode() {
-		// Check if extension is loaded as unpacked (development mode)
+		// Check if sidepanel-dev.html exists to distinguish true dev mode from production testing
 		try {
-			const info = await chrome.management.getSelf()
-			const isDev = info.installType === "development"
-			console.log(`[Background] Extension install type: ${info.installType}`)
-			return isDev
+			const devHtmlUrl = chrome.runtime.getURL("sidepanel/sidepanel-dev.html")
+			const response = await fetch(devHtmlUrl, { method: "HEAD" })
+			const devHtmlExists = response.ok
+			console.log(`[Background] Dev HTML exists: ${devHtmlExists}`)
+			return devHtmlExists
 		} catch (error) {
-			console.warn("[Background] Could not detect install type, assuming production")
+			console.log("[Background] Dev HTML not found, using production mode")
 			return false
 		}
 	}
