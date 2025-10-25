@@ -56,7 +56,7 @@ const AutoApproveBar = ({ style }: AutoApproveBarProps) => {
 		}
 
 		return [
-			...favorites.map((favId) => renderFavoritedItem(favId)),
+			...favorites.map((favId) => <div key={favId}>{renderFavoritedItem(favId)}</div>),
 			minusFavorites.length > 0 ? (
 				<span className="text-[color:var(--vscode-foreground-muted)] pl-[10px] opacity-60" key="separator">
 					✓

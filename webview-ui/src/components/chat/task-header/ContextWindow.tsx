@@ -213,16 +213,18 @@ const ContextWindow: React.FC<ContextWindowProgressProps> = ({
 						<Tooltip
 							closeDelay={0}
 							content={
-								<ContextWindowSummary
-									autoCompactThreshold={useAutoCondense ? threshold : undefined}
-									cacheReads={cacheReads}
-									cacheWrites={cacheWrites}
-									contextWindow={tokenData.max}
-									percentage={tokenData.percentage}
-									tokensIn={tokensIn}
-									tokensOut={tokensOut}
-									tokenUsed={tokenData.used}
-								/>
+								<div className="context-window-tooltip-content">
+									<ContextWindowSummary
+										autoCompactThreshold={useAutoCondense ? threshold : undefined}
+										cacheReads={cacheReads}
+										cacheWrites={cacheWrites}
+										contextWindow={tokenData.max}
+										percentage={tokenData.percentage}
+										tokensIn={tokensIn}
+										tokensOut={tokensOut}
+										tokenUsed={tokenData.used}
+									/>
+								</div>
 							}
 							disableAnimation={true}
 							isOpen={isOpened}
@@ -231,42 +233,44 @@ const ContextWindow: React.FC<ContextWindowProgressProps> = ({
 							shouldCloseOnBlur={false}
 							shouldCloseOnInteractOutside={() => false}
 							showArrow={true}>
-							<div
-								aria-label="Auto condense threshold"
-								aria-valuemax={100}
-								aria-valuemin={0}
-								aria-valuenow={Math.round(threshold * 100)}
-								aria-valuetext={`${Math.round(threshold * 100)}% threshold`}
-								className="relative w-full text-foreground context-window-progress brightness-100"
-								onFocus={handleFocus}
-								onKeyDown={handleKeyDown}
-								ref={progressBarRef}
-								role="slider"
-								tabIndex={useAutoCondense ? 0 : -1}>
-								<Progress
-									aria-label="Context window usage progress"
-									classNames={{
-										base: "drop-shadow-md w-full cursor-pointer",
-										track: cn("rounded max-h-2 h-3 bg-foreground/10"),
-										indicator: "bg-foreground rounded-r",
-										label: "tracking-wider font-medium text-foreground/80",
-										value: "text-description",
-									}}
-									color="success"
-									disableAnimation={true}
-									onClick={handleContextWindowBarClick}
-									size="md"
-									value={tokenData.percentage}
-								/>
-								{useAutoCondense && (
-									<AutoCondenseMarker
-										isContextWindowHoverOpen={isOpened}
-										shouldAnimate={shouldAnimateMarker}
-										threshold={threshold}
-										usage={tokenData.percentage}
+							<div>
+								<div
+									aria-label="Auto condense threshold"
+									aria-valuemax={100}
+									aria-valuemin={0}
+									aria-valuenow={Math.round(threshold * 100)}
+									aria-valuetext={`${Math.round(threshold * 100)}% threshold`}
+									className="relative w-full text-foreground context-window-progress brightness-100"
+									onFocus={handleFocus}
+									onKeyDown={handleKeyDown}
+									ref={progressBarRef}
+									role="slider"
+									tabIndex={useAutoCondense ? 0 : -1}>
+									<Progress
+										aria-label="Context window usage progress"
+										classNames={{
+											base: "drop-shadow-md w-full cursor-pointer",
+											track: cn("rounded max-h-2 h-3 bg-foreground/10"),
+											indicator: "bg-foreground rounded-r",
+											label: "tracking-wider font-medium text-foreground/80",
+											value: "text-description",
+										}}
+										color="success"
+										disableAnimation={true}
+										onClick={handleContextWindowBarClick}
+										size="md"
+										value={tokenData.percentage}
 									/>
-								)}
-								{isOpened}
+									{useAutoCondense && (
+										<AutoCondenseMarker
+											isContextWindowHoverOpen={isOpened}
+											shouldAnimate={shouldAnimateMarker}
+											threshold={threshold}
+											usage={tokenData.percentage}
+										/>
+									)}
+									{isOpened}
+								</div>
 							</div>
 						</Tooltip>
 					</div>

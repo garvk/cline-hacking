@@ -215,7 +215,9 @@ const ModelButtonWrapper = styled.div`
 	max-width: 100%; // Don't overflow parent
 `
 
-const ModelDisplayButton = styled.a<{ isActive?: boolean; disabled?: boolean }>`
+const ModelDisplayButton = styled.a.withConfig({
+	shouldForwardProp: (prop) => !["isActive", "disabled"].includes(prop),
+})<{ isActive?: boolean; disabled?: boolean }>`
 	padding: 0px 0px;
 	height: 20px;
 	width: 100%;
