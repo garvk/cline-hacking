@@ -21,7 +21,7 @@ The correct order is:
 @import url("../../node_modules/@vscode/codicons/dist/codicon.css");
 @import url("../node_modules/@fontsource/azeret-mono/index.css");
 
-/* Import IBM Plex Mono for chrome-extension platform */
+/* Import IBM Plex Mono for standalone platform */
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap");
 
 /* Tailwind imports come after external imports */
@@ -59,8 +59,8 @@ body {
 	width: 100%;
 }
 
-/* Chrome Extension - Minimalist Monochrome Design System */
-:root[data-platform="chrome-extension"] {
+/* Standalone - Minimalist Monochrome Design System */
+:root[data-platform="standalone"] {
 	/* Font Configuration - Improved Legibility (CSS variables only, no direct application) */
 	--font-family: "IBM Plex Mono", "Courier New", monospace;
 	--font-size: 0.875rem;
@@ -171,8 +171,8 @@ body {
 	--vscode-checkbox-border: hsl(var(--border));
 }
 
-/* Chrome Extension Dark Mode */
-:root[data-platform="chrome-extension"].dark {
+/* Standalone Dark Mode */
+:root[data-platform="standalone"].dark {
 	/* Dark Mode Colors (HSL) - Improved Contrast */
 	--background: 0 0% 5%;
 	--foreground: 0 0% 95%;
@@ -268,8 +268,8 @@ body {
 	--vscode-checkbox-border: hsl(var(--border));
 }
 
-/* Apply IBM Plex Mono to chrome-extension platform - ONLY color and font family */
-:root[data-platform="chrome-extension"] body {
+/* Apply IBM Plex Mono to standalone platform - ONLY color and font family */
+:root[data-platform="standalone"] body {
 	font-family: var(--font-family);
 	background-color: hsl(var(--background));
 	color: hsl(var(--foreground));
@@ -279,106 +279,21 @@ body {
 }
 
 /* Apply typography only to text elements, NOT to layout-critical elements */
-:root[data-platform="chrome-extension"] p,
-:root[data-platform="chrome-extension"] span,
-:root[data-platform="chrome-extension"] label,
-:root[data-platform="chrome-extension"] li {
+:root[data-platform="standalone"] p,
+:root[data-platform="standalone"] span,
+:root[data-platform="standalone"] label,
+:root[data-platform="standalone"] li {
 	font-family: var(--font-family);
 	letter-spacing: var(--letter-spacing);
 }
 
-/* Chrome Extension Custom Utility Classes - Clean Borders */
-:root[data-platform="chrome-extension"] .line-frame {
+/* Standalone Custom Utility Classes - Clean Borders */
+:root[data-platform="standalone"] .line-frame {
 	border: var(--line-thin) solid hsl(var(--border));
 }
 
-:root[data-platform="chrome-extension"] .line-frame-strong {
+:root[data-platform="standalone"] .line-frame-strong {
 	border: var(--line-medium) solid hsl(var(--border-strong));
-}
-
-/* Dark theme variables for standalone browser version */
-:root[data-platform="standalone"] {
-	/* Primary backgrounds - VSCode Dark+ theme colors */
-	--vscode-editor-background: #1e1e1e;
-	--vscode-sideBar-background: #252526;
-	--vscode-activityBar-background: #2d2d30;
-	--vscode-statusBar-background: #007acc;
-	--vscode-titleBar-activeBackground: #3c3c3c;
-	--vscode-menu-background: #252526;
-
-	/* Text colors */
-	--vscode-editor-foreground: #d4d4d4;
-	--vscode-foreground: #cccccc;
-	--vscode-descriptionForeground: #cccccc99;
-	--vscode-icon-foreground: #cccccc;
-
-	/* Button colors */
-	--vscode-button-background: #0e639c;
-	--vscode-button-foreground: #ffffff;
-	--vscode-button-hoverBackground: #1177bb;
-	--vscode-button-secondaryBackground: #3a3d41;
-	--vscode-button-secondaryForeground: #cccccc;
-	--vscode-button-secondaryHoverBackground: #45494e;
-	--vscode-button-border: #0e639c;
-
-	/* Input colors */
-	--vscode-input-background: #3c3c3c;
-	--vscode-input-foreground: #cccccc;
-	--vscode-input-border: #3c3c3c;
-	--vscode-input-placeholderForeground: #cccccc80;
-	--vscode-inputOption-activeBorder: #007acc;
-	--vscode-inputOption-activeBackground: #0e639c1a;
-	--vscode-inputOption-activeForeground: #ffffff;
-
-	/* Border colors */
-	--vscode-panel-border: #80808059;
-	--vscode-sideBar-border: #2b2b2b;
-	--vscode-focusBorder: #007fd4;
-	--vscode-contrastBorder: #6fc3df;
-
-	/* List and selection colors */
-	--vscode-list-activeSelectionBackground: #094771;
-	--vscode-list-activeSelectionForeground: #ffffff;
-	--vscode-list-hoverBackground: #2a2d2e;
-	--vscode-list-inactiveSelectionBackground: #37373d;
-	--vscode-list-focusBackground: #062f4a;
-
-	/* Scrollbar colors */
-	--vscode-scrollbarSlider-background: #79797966;
-	--vscode-scrollbarSlider-hoverBackground: #646464b3;
-	--vscode-scrollbarSlider-activeBackground: #bfbfbf66;
-
-	/* Badge colors */
-	--vscode-badge-background: #4d4d4d;
-	--vscode-badge-foreground: #ffffff;
-
-	/* Progress bar */
-	--vscode-progressBar-background: #0e70c0;
-
-	/* Notification colors */
-	--vscode-notifications-background: #252526;
-	--vscode-notifications-foreground: #cccccc;
-	--vscode-notificationToast-border: #474747;
-
-	/* Error colors */
-	--vscode-errorForeground: #f14c4c;
-	--vscode-warningForeground: #ffb454;
-	--vscode-infoForeground: #3794ff;
-
-	/* Terminal colors */
-	--vscode-terminal-background: #1e1e1e;
-	--vscode-terminal-foreground: #cccccc;
-
-	/* Checkbox colors */
-	--vscode-checkbox-background: #3c3c3c;
-	--vscode-checkbox-foreground: #f0f0f0;
-	--vscode-checkbox-border: #3c3c3c;
-}
-
-/* Ensure body and root have proper background for standalone */
-:root[data-platform="standalone"] body {
-	background-color: var(--vscode-editor-background, #1e1e1e);
-	color: var(--vscode-editor-foreground, #d4d4d4);
 }
 
 #root {
