@@ -38,7 +38,7 @@ localPort = 26041
 externalPort = 80
 
 [[ports]]
-localPort = 36749
+localPort = 37279
 externalPort = 3002
 
 [nix]
@@ -68,3 +68,6 @@ waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[deployment]
+deploymentTarget = "cloudrun"
