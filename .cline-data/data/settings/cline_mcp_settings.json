@@ -3,13 +3,21 @@
 		"indian-kanoon": {
 			"command": "node",
 			"args": [
-				"/home/runner/$REPL_SLUG/mcp-servers/indian-kanoon-server/build/index.js"
+				"/home/runner/workspace/mcp-servers/indian-kanoon-server/build/index.js"
 			],
-			"env": {},
+			"env": {
+				"INDIANKANOON_API_TOKEN": "98394cdd9c5f1467cd6e43d9a57a2174c019f49d"
+			},
 			"type": "stdio",
 			"disabled": false,
 			"autoApprove": [],
 			"timeout": 60
+		},
+		"chrome-devtools": {
+			"timeout": 60,
+			"type": "stdio",
+			"command": "npx",
+			"args": ["-y", "chrome-devtools-mcp@latest"]
 		}
 	}
 }
