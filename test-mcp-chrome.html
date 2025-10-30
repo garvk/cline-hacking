@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome DevTools MCP Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            margin-top: 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 32px;
+            text-align: center;
+            font-size: 16px;
+            margin: 10px 5px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            min-height: 100px;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            margin: 10px 5px;
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Chrome DevTools MCP Test Page</h1>
+        <p>This page is for testing the Chrome DevTools MCP server integration.</p>
+        
+        <div>
+            <h2>Interactive Elements</h2>
+            <input type="text" id="nameInput" placeholder="Enter your name">
+            <button id="greetBtn">Greet Me</button>
+            <button id="countBtn">Count Clicks: <span id="counter">0</span></button>
+        </div>
+        
+        <div id="output">
+            <p><strong>Output:</strong></p>
+            <div id="outputContent">Click a button to see output...</div>
+        </div>
+    </div>
+
+    <script>
+        let clickCount = 0;
+        
+        document.getElementById('greetBtn').addEventListener('click', function() {
+            const name = document.getElementById('nameInput').value || 'Guest';
+            const output = document.getElementById('outputContent');
+            output.innerHTML = `Hello, ${name}! Welcome to the MCP test page! 👋`;
+            console.log(`Greeted: ${name}`);
+        });
+        
+        document.getElementById('countBtn').addEventListener('click', function() {
+            clickCount++;
+            document.getElementById('counter').textContent = clickCount;
+            document.getElementById('outputContent').innerHTML = `You've clicked the button ${clickCount} time(s)! 🎯`;
+            console.log(`Click count: ${clickCount}`);
+        });
+        
+        console.log('Test page loaded successfully!');
+    </script>
+</body>
+</html>
