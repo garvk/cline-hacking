@@ -12,6 +12,15 @@ lsof -ti:8080 | xargs kill -9 2>/dev/null
 lsof -ti:25463 | xargs kill -9 2>/dev/null
 sleep 2
 
+if [ -d "mcp-servers/indian-kanoon-server" ]; then
+    echo -e "${YELLOW}Building Indian Kanoon MCP Server...${NC}"
+    cd mcp-servers/indian-kanoon-server
+    npm install
+    npm run build
+    cd ../..
+    echo -e "${GREEN}✓ MCP Server built${NC}"
+fi
+
 # Build if needed
 if [ ! -f "cli/bin/cline-host" ]; then
     echo "Building CLI..."
