@@ -1,47 +1,39 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Cline Webview</title>
-	</head>
-	<body>
-		<div id="root"></div>
-		<script type="module" src="/src/main.tsx"></script>
-		<!-- Standalone bridge script for browser communication -->
-		<script>
-			// Function to load bridge script
-			function loadStandaloneBridge() {
-				console.log('[Bridge Loader] Attempting to load standalone bridge...');
-				const script = document.createElement('script');
-				script.src = 'http://localhost:8001/standalone-bridge.js';
-				script.onload = function() {
-					console.log('[Bridge Loader] Bridge script loaded successfully');
-				};
-				script.onerror = function() {
-					console.warn('[Bridge Loader] Failed to load bridge from localhost:8001, trying localhost:8080');
-					const fallbackScript = document.createElement('script');
-					fallbackScript.src = 'http://localhost:8080/standalone-bridge.js';
-					fallbackScript.onload = function() {
-						console.log('[Bridge Loader] Bridge script loaded from fallback');
-					};
-					fallbackScript.onerror = function() {
-						console.error('[Bridge Loader] Failed to load standalone bridge script from both ports');
-					};
-					document.head.appendChild(fallbackScript);
-				};
-				document.head.appendChild(script);
-			}
+        <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>Cline Webview</title>
+        </head>
+        <body>
+                <div id="root"></div>
+                <script type="module" src="/src/main.tsx"></script>
+                <!-- Standalone bridge script for browser communication -->
+                <script>
+                        // Function to load bridge script
+                        function loadStandaloneBridge() {
+                                console.log('[Bridge Loader] Attempting to load standalone bridge...');
+                                const script = document.createElement('script');
+                                // Use relative path in dev mode to leverage Vite proxy
+                                script.src = '/standalone-bridge.js';
+                                script.onload = function() {
+                                        console.log('[Bridge Loader] Bridge script loaded successfully');
+                                };
+                                script.onerror = function() {
+                                        console.error('[Bridge Loader] Failed to load standalone bridge script');
+                                };
+                                document.head.appendChild(script);
+                        }
 
-			// Load bridge script if platform is standalone or in development mode
-			if (typeof __PLATFORM__ !== 'undefined' && __PLATFORM__ === 'standalone') {
-				// Production build with standalone platform
-				loadStandaloneBridge();
-			} else if (window.location.port === '25463') {
-				// Development mode on Vite dev server - always load for testing
-				console.log('[Bridge Loader] Development mode detected, loading bridge for testing');
-				loadStandaloneBridge();
-			}
-		</script>
-	</body>
+                        // Load bridge script if platform is standalone or in development mode
+                        if (typeof __PLATFORM__ !== 'undefined' && __PLATFORM__ === 'standalone') {
+                                // Production build with standalone platform
+                                loadStandaloneBridge();
+                        } else if (window.location.port === '25463' || window.location.port === '5000') {
+                                // Development mode on Vite dev server - always load for testing
+                                console.log('[Bridge Loader] Development mode detected (port ' + window.location.port + '), loading bridge for testing');
+                                loadStandaloneBridge();
+                        }
+                </script>
+        </body>
 </html>
