@@ -16,3 +16,55 @@
 
 # Cline Startup Script
 start = "bash start.sh"
+modules = ["nodejs-20", "go-1.21"]
+
+[agent]
+expertMode = true
+
+[[ports]]
+localPort = 5000
+externalPort = 5000
+
+[[ports]]
+localPort = 8001
+externalPort = 3000
+
+[[ports]]
+localPort = 25463
+externalPort = 3001
+
+[[ports]]
+localPort = 26041
+externalPort = 80
+
+[[ports]]
+localPort = 36749
+externalPort = 3002
+
+[nix]
+channel = "stable-25_05"
+packages = ["lsof"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Cline Services"
+
+[[workflows.workflow]]
+name = "Cline Services"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash start-cline-replit.sh"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
