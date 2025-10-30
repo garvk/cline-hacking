@@ -1,0 +1,13 @@
+run = ["bash", "start.sh"]
+
+[env]
+CLINE_DIR = "/home/runner/$REPL_SLUG/.cline-data"
+INDIANKANOON_API_TOKEN = "98394cdd9c5f1467cd6e43d9a57a2174c019f49d"
+POSTHOG_TELEMETRY_ENABLED = "false"
+
+[nix]
+channel = "stable-23_11"
+
+[nix.packages]
+nodejs = "nodejs-20_x"
+go = "go_1_21"

@@ -1,0 +1,15 @@
+{
+	"mcpServers": {
+		"indian-kanoon": {
+			"command": "node",
+			"args": [
+				"/home/runner/$REPL_SLUG/mcp-servers/indian-kanoon-server/build/index.js"
+			],
+			"env": {},
+			"type": "stdio",
+			"disabled": false,
+			"autoApprove": [],
+			"timeout": 60
+		}
+	}
+}
