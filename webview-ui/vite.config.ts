@@ -28,6 +28,10 @@ const writePortToFile = (): Plugin => {
 
 const isDevBuild = process.argv.includes("--dev-build")
 
+// Detect if we're running on Replit (development or production)
+// On Replit, HMR WebSocket connections fail due to proxy, so we disable HMR
+const isReplitEnvironment = Boolean(process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT)
+
 // Valid platforms, these should the keys in platform-configs.json
 const VALID_PLATFORMS = ["vscode", "standalone"]
 const platform = process.env.PLATFORM || "vscode" // Default to vscode
@@ -36,6 +40,9 @@ if (!VALID_PLATFORMS.includes(platform)) {
         throw new Error(`Invalid PLATFORM "${platform}". Must be one of: ${VALID_PLATFORMS.join(", ")}`)
 }
 console.log("Building webview for", platform)
+if (isReplitEnvironment) {
+        console.log("Replit environment detected - HMR disabled to avoid WebSocket proxy issues")
+}
 
 export default defineConfig({
         plugins: [react(), tailwindcss(), writePortToFile()],
@@ -101,7 +108,8 @@ export default defineConfig({
         server: {
                 port: 25463,
                 allowedHosts: true,
-                hmr: {
+                // Disable HMR on Replit to avoid WebSocket connection errors through proxy
+                hmr: isReplitEnvironment ? false : {
                         host: "localhost",
                         protocol: "ws",
                 },
