@@ -31,12 +31,9 @@ channel = "stable-25_05"
 packages = [
   "lsof",
   "vim-full",
-  "chromium",
-  "chromedriver",
   "nss",
   "alsa-lib",
   "at-spi2-atk",
-  "gtk3",
   "mesa",
   "xorg.libX11",
   "xorg.libxcb",
