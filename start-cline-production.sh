@@ -18,20 +18,34 @@ fi
 # Start Hostbridge
 ./cli/bin/cline-host --port 26041 --verbose > /tmp/hostbridge.log 2>&1 &
 HOSTBRIDGE_PID=$!
-sleep 2
+sleep 1
 
 # Start Cline Core
 cd dist-standalone
 node cline-core.js --port 8080 --host-bridge-port 26041 > /tmp/cline-core.log 2>&1 &
 CLINE_CORE_PID=$!
 cd ..
-sleep 2
+sleep 1
 
 # Start Frontend on port 5000 (Replit webview requirement)
 cd webview-ui
 PLATFORM=standalone npx vite --host 0.0.0.0 --port 5000 > /tmp/frontend.log 2>&1 &
 FRONTEND_PID=$!
 cd ..
+
+# Wait for frontend to be ready (critical for deployment health checks)
+echo "Waiting for frontend to be ready on port 5000..."
+for i in {1..30}; do
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/ | grep -q "200"; then
+        echo "Frontend is ready!"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        echo "ERROR: Frontend failed to start within 30 seconds"
+        exit 1
+    fi
+    sleep 1
+done
 
 echo "Services started successfully"
 echo "Hostbridge PID: $HOSTBRIDGE_PID"

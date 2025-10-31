@@ -21,10 +21,6 @@ externalPort = 3001
 localPort = 26041
 externalPort = 80
 
-[[ports]]
-localPort = 41653
-externalPort = 3002
-
 [nix]
 channel = "stable-25_05"
 packages = [
