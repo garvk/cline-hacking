@@ -1,0 +1,113 @@
+2025-10-31T13:35:41Z info: Deployment: a88cbd82-16b5-4b8c-ac5a-2f6f364ab82c
+2025-10-31T13:35:41Z info: Connecting to builder
+2025-10-31T13:35:42Z info: Builder connected
+2025-10-31T13:35:43Z info: Installing packages
+--> npm install
+
+
+> claude-dev@3.32.6 prepare
+> husky
+
+
+
+up to date, audited 1512 packages in 4s
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.6.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+npm notice To update run: npm install -g npm@11.6.2
+npm notice
+
+2025-10-31T13:35:49Z info: Starting Build
+Starting Cline build process...
+Building CLI...
+
+
+> claude-dev@3.32.6 compile-cli
+> scripts/build-cli.sh
+
+
++ npm run protos
+
+
+> claude-dev@3.32.6 protos
+> node scripts/build-proto.mjs
+
+
+Compiling Protocol Buffers...
+
+Processing 20 proto files from /home/runner/workspace/proto
+
+Generated ProtoBus files at:
+
+
+> claude-dev@3.32.6 postprotos
+> biome format src/shared/proto src/core/controller src/hosts/ webview-ui/src/services src/generated --write --no-errors-on-unmatched
+
+
+Formatted 194 files in 331ms. No fixes applied.
++ npm run protos-go
+
+
+> claude-dev@3.32.6 protos-go
+> node scripts/build-go-proto.mjs
+
+
+Starting Go protobuf code generation...
+
+Found 20 proto files
+
+Checking Go dependencies...
+
+✓ Go is installed
+
+Installing Go protobuf tools...
+Installing google.golang.org/protobuf/cmd/protoc-gen-go@latest...
+
+go: downloading google.golang.org/protobuf v1.36.10
+
+go: google.golang.org/protobuf@v1.36.10 requires go >= 1.23; switching to go1.24.9
+
+go: downloading go1.24.9 (linux/amd64)
+
+Installing google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest...
+
+go: downloading google.golang.org/grpc v1.76.0
+
+go: downloading google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
+
+go: downloading google.golang.org/protobuf v1.34.1
+
+Go protobuf tools installed successfully!
+
+Warning: Some Go protobuf tools are not in your PATH:
+  - protoc-gen-go
+
+  - protoc-gen-go-grpc
+
+To fix this, add your Go bin directory to your PATH:
+
+  Add this to your shell profile (~/.bashrc, ~/.zshrc, etc.):
+  export PATH="$PATH:/home/runner/go/bin"
+
+Generating Go code in /home/runner/workspace/src/generated/grpc-go...
+
+protoc-gen-go: program not found or is not executable
+Please specify a program using absolute path or make sure the program is available in your PATH system variable
+
+--go_out: protoc-gen-go: Plugin failed with status code 1.
+
+Error generating Go code: Error: Command failed: /home/runner/workspace/node_modules/grpc-tools/bin/protoc --proto_path="/home/runner/workspace/proto" --go_out="/home/runner/workspace/src/generated/grpc-go" --go_opt=module=github.com/cline/grpc-go --go-grpc_out="/home/runner/workspace/src/generated/grpc-go" --go-grpc_opt=module=github.com/cline/grpc-go cline/account.proto cline/browser.proto cline/checkpoints.proto cline/commands.proto cline/common.proto cline/dictation.proto cline/file.proto cline/mcp.proto cline/models.proto cline/oca_account.proto cline/slash.proto cline/state.proto cline/task.proto cline/ui.proto cline/web.proto host/diff.proto host/env.proto host/testing.proto host/window.proto host/workspace.proto
+    at genericNodeError (node:internal/errors:984:15)
+    at wrappedFn (node:internal/errors:538:14)
+    at checkExecSyncError (node:child_process:891:11)
+    at execSync (node:child_process:963:15)
+    at goProtoc (file:///home/runner/workspace/scripts/build-go-proto.mjs:167:3)
+    at async main (file:///home/runner/workspace/scripts/build-go-proto.mjs:591:4) {
+  status: 1,
+  signal: null,
+  output: [ null, null, null ],
+  pid: 381,
+  stdout: null,
+  stderr: null
+}
