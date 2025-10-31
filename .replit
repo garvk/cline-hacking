@@ -70,6 +70,14 @@ waitForPort = 5000
 [workflows.workflow.metadata]
 outputType = "webview"
 
-[deployment]
-deploymentTarget = "vm"
+# [deployment]
+# deploymentTarget = "vm"
+# run = ["bash", "start-cline-production.sh"]
+
+deploymentTarget = "autoscale"
+build = [
+  "bash",
+  "-c",
+  "cd webview-ui && PLATFORM=standalone NODE_ENV=production npm run build",
+]
 run = ["bash", "start-cline-production.sh"]
