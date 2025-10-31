@@ -1,23 +1,23 @@
 {
-        "mcpServers": {
-                "indian-kanoon": {
-                        "command": "node",
-                        "args": [
-                                "/home/runner/workspace/mcp-servers/indian-kanoon-server/build/index.js"
-                        ],
-                        "env": {
-                                "INDIANKANOON_API_TOKEN": "${INDIANKANOON_API_TOKEN}"
-                        },
-                        "type": "stdio",
-                        "disabled": false,
-                        "autoApprove": [],
-                        "timeout": 60
-                },
-                "chrome-devtools": {
-                        "timeout": 60,
-                        "type": "stdio",
-                        "command": "npx",
-                        "args": ["-y", "chrome-devtools-mcp@latest"]
-                }
-        }
+	"mcpServers": {
+		"indian-kanoon": {
+			"command": "node",
+			"args": [
+				"/home/runner/workspace/mcp-servers/indian-kanoon-server/build/index.js"
+			],
+			"env": {
+				"INDIANKANOON_API_TOKEN": "${INDIANKANOON_API_TOKEN}"
+			},
+			"type": "stdio",
+			"disabled": false,
+			"autoApprove": [],
+			"timeout": 60
+		},
+		"chrome-devtools": {
+			"timeout": 60,
+			"type": "stdio",
+			"command": "npx",
+			"args": ["-y", "chrome-devtools-mcp@latest"]
+		}
+	}
 }

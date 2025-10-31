@@ -79,6 +79,17 @@ export class WebServer {
         }
 
         private setupRoutes() {
+                // Root endpoint for deployment health checks (must respond quickly with 200)
+                this.app.get("/", (req, res, next) => {
+                        // If Accept header includes text/html, serve the static index.html
+                        if (req.accepts("html")) {
+                                next()
+                                return
+                        }
+                        // Otherwise, return a simple health check response for deployment
+                        res.status(200).send("OK")
+                })
+
                 // Health check endpoint
                 this.app.get("/health", (req, res) => {
                         res.json({ status: "ok", timestamp: new Date().toISOString() })
