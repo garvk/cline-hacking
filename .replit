@@ -52,9 +52,5 @@ outputType = "webview"
 
 [deployment]
 deploymentTarget = "autoscale"
-build = [
-  "bash",
-  "-c",
-  "npm run compile-cli && npm run compile-standalone:single && cd webview-ui && npm run build",
-]
+build = ["bash", "build.sh"]
 run = ["bash", "start-cline-production.sh"]
