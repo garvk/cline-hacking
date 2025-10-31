@@ -30,15 +30,15 @@ sleep 1
 # Build and serve Frontend on port 5000 (Replit webview requirement)
 cd webview-ui
 
-# # Build the frontend if build directory doesn't exist or is empty
-# if [ ! -d "build" ] || [ -z "$(ls -A build 2>/dev/null)" ]; then
-#     echo "Building frontend..."
-#     PLATFORM=standalone NODE_ENV=production npm run build
-#     if [ $? -ne 0 ]; then
-#         echo "ERROR: Frontend build failed"
-#         exit 1
-#     fi
-# fi
+# Build the frontend if build directory doesn't exist or is empty
+if [ ! -d "build" ] || [ -z "$(ls -A build 2>/dev/null)" ]; then
+    echo "Building frontend..."
+    PLATFORM=standalone NODE_ENV=production npm run build
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Frontend build failed"
+        exit 1
+    fi
+fi
 
 # Serve the built frontend using vite preview
 PLATFORM=standalone REPLIT_DEPLOYMENT=1 npx vite preview --host 0.0.0.0 --port 5000 --strictPort > /tmp/frontend.log 2>&1 &
