@@ -29,12 +29,7 @@ externalPort = 3002
 [nix]
 channel = "stable-25_05"
 packages = [
-  "lsof",
-  "vim-full",
-  "nss",
-  "alsa-lib",
   "at-spi2-atk",
-  "mesa",
   "xorg.libX11",
   "xorg.libxcb",
   "xorg.libXScrnSaver",
