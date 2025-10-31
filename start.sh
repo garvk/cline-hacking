@@ -1,9 +1,5 @@
 #!/bin/bash
 
-echo "Setting env"
-export INDIANKANOON_API_TOKEN="98394cdd9c5f1467cd6e43d9a57a2174c019f49d"
-
-
 # Simple Cline Startup Script
 echo "========================================"
 echo "Starting Cline Services"

@@ -18,6 +18,9 @@ pnpm-lock.yaml
 .venv
 .actrc
 
+# Keep MCP server built files for faster deployment
+!mcp-servers/indian-kanoon-server/build/
+
 webview-ui/src/**/*.js
 webview-ui/src/**/*.js.map
 

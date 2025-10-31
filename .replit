@@ -40,6 +40,10 @@ externalPort = 3001
 localPort = 26041
 externalPort = 80
 
+[[ports]]
+localPort = 37957
+externalPort = 3003
+
 [nix]
 channel = "stable-25_05"
 packages = ["lsof", "vim-full", "chromium", "chromedriver", "nss", "alsa-lib", "at-spi2-atk", "gtk3", "mesa", "xorg.libX11", "xorg.libxcb", "xorg.libXScrnSaver", "cacert", "liberation_ttf", "xdg-utils"]
@@ -69,4 +73,5 @@ waitForPort = 5000
 outputType = "webview"
 
 [deployment]
-deploymentTarget = "cloudrun"
+deploymentTarget = "autoscale"
+run = ["bash", "start-cline-production.sh"]
