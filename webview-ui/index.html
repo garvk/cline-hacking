@@ -7,33 +7,86 @@
         </head>
         <body>
                 <div id="root"></div>
-                <script type="module" src="/src/main.tsx"></script>
                 <!-- Standalone bridge script for browser communication -->
                 <script>
-                        // Function to load bridge script
+                        // Global flag to track when bridge is ready
+                        window.__bridgeReady = false;
+                        
+                        // Function to load bridge script synchronously
                         function loadStandaloneBridge() {
-                                console.log('[Bridge Loader] Attempting to load standalone bridge...');
-                                const script = document.createElement('script');
-                                // Use relative path in dev mode to leverage Vite proxy
-                                script.src = '/standalone-bridge.js';
-                                script.onload = function() {
-                                        console.log('[Bridge Loader] Bridge script loaded successfully');
-                                };
-                                script.onerror = function() {
-                                        console.error('[Bridge Loader] Failed to load standalone bridge script');
-                                };
-                                document.head.appendChild(script);
+                                console.log('[Bridge Loader] Loading standalone bridge...');
+                                
+                                // Create a synchronous XMLHttpRequest to load the script
+                                const xhr = new XMLHttpRequest();
+                                xhr.open('GET', '/standalone-bridge.js', false); // false = synchronous
+                                try {
+                                        xhr.send();
+                                        if (xhr.status === 200) {
+                                                console.log('[Bridge Loader] Bridge script fetched successfully');
+                                                // Execute the script immediately
+                                                const scriptElement = document.createElement('script');
+                                                scriptElement.text = xhr.responseText;
+                                                document.head.appendChild(scriptElement);
+                                                
+                                                // Check if standalonePostMessage was created
+                                                if (window.standalonePostMessage) {
+                                                        console.log('[Bridge Loader] Bridge loaded successfully, standalonePostMessage is available');
+                                                        window.__bridgeReady = true;
+                                                } else {
+                                                        console.warn('[Bridge Loader] Bridge script executed but standalonePostMessage not found');
+                                                        // Set a flag that the bridge script might define it asynchronously
+                                                        window.__bridgeReady = 'pending';
+                                                }
+                                        } else {
+                                                console.error('[Bridge Loader] Failed to fetch bridge script, status:', xhr.status);
+                                        }
+                                } catch (e) {
+                                        console.error('[Bridge Loader] Error loading bridge script:', e);
+                                }
                         }
 
-                        // Load bridge script if platform is standalone or in development mode
-                        if (typeof __PLATFORM__ !== 'undefined' && __PLATFORM__ === 'standalone') {
-                                // Production build with standalone platform
+                        // Check if we should load the bridge
+                        const isDevelopmentPort = window.location.port === '25463' || window.location.port === '5000';
+                        const isReplitProxy = window.location.hostname.includes('repl.co') || window.location.hostname.includes('replit.dev');
+                        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                        // Note: __PLATFORM__ won't be replaced in inline scripts, so we rely on environment detection
+                        const shouldLoadBridge = isDevelopmentPort || isReplitProxy || isLocalhost || window.location.pathname.includes('standalone');
+                        
+                        console.log('[Bridge Loader] Environment check:', {
+                                hostname: window.location.hostname,
+                                port: window.location.port,
+                                isDevelopmentPort: isDevelopmentPort,
+                                isReplitProxy: isReplitProxy,
+                                isLocalhost: isLocalhost,
+                                shouldLoadBridge: shouldLoadBridge
+                        });
+                        
+                        if (shouldLoadBridge) {
+                                console.log('[Bridge Loader] Loading bridge for development/standalone mode...');
                                 loadStandaloneBridge();
-                        } else if (window.location.port === '25463' || window.location.port === '5000') {
-                                // Development mode on Vite dev server - always load for testing
-                                console.log('[Bridge Loader] Development mode detected (port ' + window.location.port + '), loading bridge for testing');
-                                loadStandaloneBridge();
+                                
+                                // If bridge is pending, wait for it to be ready
+                                if (window.__bridgeReady === 'pending') {
+                                        console.log('[Bridge Loader] Waiting for bridge to initialize...');
+                                        let retries = 0;
+                                        const checkInterval = setInterval(function() {
+                                                retries++;
+                                                if (window.standalonePostMessage) {
+                                                        console.log('[Bridge Loader] Bridge initialized after ' + retries + ' retries');
+                                                        window.__bridgeReady = true;
+                                                        clearInterval(checkInterval);
+                                                } else if (retries > 50) { // 5 seconds timeout
+                                                        console.error('[Bridge Loader] Bridge initialization timeout');
+                                                        window.__bridgeReady = false;
+                                                        clearInterval(checkInterval);
+                                                }
+                                        }, 100);
+                                }
+                        } else {
+                                console.log('[Bridge Loader] Not in standalone/development mode, skipping bridge load');
                         }
                 </script>
+                <!-- Load React app after bridge setup -->
+                <script type="module" src="/src/main.tsx"></script>
         </body>
 </html>
