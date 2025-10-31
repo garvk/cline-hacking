@@ -1,0 +1,73 @@
+2025-10-31T11:54:02Z info: Deployment: a88cbd82-16b5-4b8c-ac5a-2f6f364ab82c
+2025-10-31T11:54:02Z info: Build: cd63fc3d-6064-4c6b-84e8-322750b950b7
+2025-10-31T11:54:02Z info: Connecting to builder
+2025-10-31T11:54:02Z info: Builder connected
+2025-10-31T11:54:04Z info: Installing packages
+--> npm install
+
+
+> claude-dev@3.32.6 prepare
+> husky
+
+
+
+up to date, audited 1512 packages in 4s
+
+269 packages are looking for funding
+
+  run `npm fund` for details
+
+
+found 0 vulnerabilities
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.6.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+npm notice To update run: npm install -g npm@11.6.2
+npm notice
+
+2025-10-31T11:54:09Z info: Skipping Build as no Build command set
+2025-10-31T11:54:10Z info: Pushing pid1 binary layer...
+2025-10-31T11:54:19Z info: Created pid1 binary layer
+2025-10-31T11:54:21Z info: Pushing Repl layer...
+2025-10-31T11:54:21Z info: Pushing hosting layer...
+2025-10-31T11:54:21Z info: Nix layers for this Repl are uncached.
+2025-10-31T11:54:21Z info: Pushing nix-0 layer...
+2025-10-31T11:54:22Z info: Created hosting layer
+2025-10-31T11:54:02Z info: Deployment: a88cbd82-16b5-4b8c-ac5a-2f6f364ab82c
+2025-10-31T11:54:02Z info: Build: cd63fc3d-6064-4c6b-84e8-322750b950b7
+2025-10-31T11:54:02Z info: Connecting to builder
+2025-10-31T11:54:02Z info: Builder connected
+2025-10-31T11:54:04Z info: Installing packages
+--> npm install
+
+
+> claude-dev@3.32.6 prepare
+> husky
+
+
+
+up to date, audited 1512 packages in 4s
+
+269 packages are looking for funding
+
+  run `npm fund` for details
+
+
+found 0 vulnerabilities
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.6.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+npm notice To update run: npm install -g npm@11.6.2
+npm notice
+
+2025-10-31T11:54:09Z info: Skipping Build as no Build command set
+2025-10-31T11:54:10Z info: Pushing pid1 binary layer...
+2025-10-31T11:54:19Z info: Created pid1 binary layer
+2025-10-31T11:54:21Z info: Pushing Repl layer...
+2025-10-31T11:54:21Z info: Pushing hosting layer...
+2025-10-31T11:54:21Z info: Nix layers for this Repl are uncached.
+2025-10-31T11:54:21Z info: Pushing nix-0 layer...
+2025-10-31T11:54:22Z info: Created hosting layer
+Deployment timed out. Check the Logs tab for more details. - 2025-10-31T12:03:02.169Z
