@@ -52,5 +52,5 @@ outputType = "webview"
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["bash", "build.sh"]
+build = ["bash", "build-deployment.sh"]
 run = ["bash", "start-cline-production.sh"]
