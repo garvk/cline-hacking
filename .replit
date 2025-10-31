@@ -1,25 +1,6 @@
-# run = ["bash", "start.sh"]
-
-# [env]
-# CLINE_DIR = "/home/runner/$REPL_SLUG/.cline-data"
-# INDIANKANOON_API_TOKEN = "98394cdd9c5f1467cd6e43d9a57a2174c019f49d"
-# POSTHOG_TELEMETRY_ENABLED = "false"
-
-# [nix]
-# channel = "stable-23_11"
-
-# [nix.packages]
-# nodejs = "nodejs-20_x"
-# go = "go_1_21"
-
-# [scripts]
-
-# Cline Startup Script
 start = "bash start.sh"
 modules = ["nodejs-20", "go-1.21"]
 
-[env]
-INDIANKANOON_API_TOKEN = "98394cdd9c5f1467cd6e43d9a57a2174c019f49d"
 
 [agent]
 expertMode = true
@@ -46,7 +27,23 @@ externalPort = 3002
 
 [nix]
 channel = "stable-25_05"
-packages = ["lsof", "vim-full", "chromium", "chromedriver", "nss", "alsa-lib", "at-spi2-atk", "gtk3", "mesa", "xorg.libX11", "xorg.libxcb", "xorg.libXScrnSaver", "cacert", "liberation_ttf", "xdg-utils"]
+packages = [
+  "lsof",
+  "vim-full",
+  "chromium",
+  "chromedriver",
+  "nss",
+  "alsa-lib",
+  "at-spi2-atk",
+  "gtk3",
+  "mesa",
+  "xorg.libX11",
+  "xorg.libxcb",
+  "xorg.libXScrnSaver",
+  "cacert",
+  "liberation_ttf",
+  "xdg-utils",
+]
 
 [workflows]
 runButton = "Project"
