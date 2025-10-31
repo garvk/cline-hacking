@@ -29,13 +29,14 @@ externalPort = 3002
 [nix]
 channel = "stable-25_05"
 packages = [
-  "at-spi2-atk",
-  "xorg.libX11",
-  "xorg.libxcb",
-  "xorg.libXScrnSaver",
-  "cacert",
-  "liberation_ttf",
-  "xdg-utils",
+  "lsof",
+  # "at-spi2-atk",
+  # "xorg.libX11",
+  # "xorg.libxcb",
+  # "xorg.libXScrnSaver",
+  # "cacert",
+  # "liberation_ttf",
+  # "xdg-utils",
 ]
 
 [workflows]
