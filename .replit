@@ -54,3 +54,14 @@ outputType = "webview"
 deploymentTarget = "autoscale"
 build = ["bash", "build-deployment.sh"]
 run = ["bash", "start-cline-production.sh"]
+ignorePorts = false
+ignorePaths = [
+  "node_modules",
+  ".git",
+  ".cache",
+  "src",
+  "webview-ui/src",
+  "dist-standalone-temp",
+  "*.log",
+  "*.map",
+]
