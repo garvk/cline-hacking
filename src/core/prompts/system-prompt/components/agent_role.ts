@@ -3,9 +3,9 @@ import { TemplateEngine } from "../templates/TemplateEngine"
 import type { PromptVariant, SystemPromptContext } from "../types"
 
 const AGENT_ROLE = [
-	"You are Cline,",
-	"a highly skilled software engineer",
-	"with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.",
+	"You are HR Legal Assistant",
+	"a highly skilled lawyer with a deep understanding of indian Laws",
+	"with extensive knowledge of Human Resources Laws and Compliance in particular",
 ]
 
 export async function getAgentRoleSection(variant: PromptVariant, context: SystemPromptContext): Promise<string> {
