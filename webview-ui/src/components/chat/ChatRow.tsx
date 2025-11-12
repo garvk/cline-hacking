@@ -1,7 +1,6 @@
 import { COMMAND_OUTPUT_STRING, COMMAND_REQ_APP_STRING } from "@shared/combineCommandSequences"
 import {
 	ClineApiReqInfo,
-	ClineAskQuestion,
 	ClineAskUseMcpServer,
 	ClineMessage,
 	ClinePlanModeResponse,
@@ -14,6 +13,7 @@ import deepEqual from "fast-deep-equal"
 import React, { MouseEvent, memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSize } from "react-use"
 import styled from "styled-components"
+import { MultipleQuestionsInput } from "@/components/chat/MultipleQuestionsInput"
 import { OptionsButtons } from "@/components/chat/OptionsButtons"
 import TaskFeedbackButtons from "@/components/chat/TaskFeedbackButtons"
 import { CheckmarkControl } from "@/components/common/CheckmarkControl"
@@ -43,11 +43,81 @@ const successColor = "var(--vscode-charts-green)"
 const _cancelledColor = "var(--vscode-descriptionForeground)"
 
 const ChatRowContainer = styled.div`
-	padding: 10px 6px 10px 15px;
+	padding: 16px 20px;
+	margin: 12px 0;
 	position: relative;
-
+	border-radius: var(--radius-md, 12px);
+	transition: all var(--transition-base, 200ms);
+	
 	&:hover ${CheckpointControls} {
 		opacity: 1;
+	}
+	
+	/* User messages - Light blue card */
+	&[data-message-type="user"] {
+		background: linear-gradient(135deg, 
+			hsl(var(--primary, 221 83% 53%) / 0.08), 
+			hsl(var(--primary, 221 83% 53%) / 0.04)
+		);
+		border-left: 3px solid hsl(var(--primary, 221 83% 53%));
+		box-shadow: var(--shadow-sm, 0 1px 3px 0 rgb(0 0 0 / 0.1));
+	}
+	
+	/* Assistant text responses - Subtle card */
+	&[data-message-type="assistant-text"] {
+		background: hsl(var(--card, 0 0% 100%));
+		border: 1px solid hsl(var(--border, 214 32% 91%));
+		box-shadow: var(--shadow-sm, 0 1px 3px 0 rgb(0 0 0 / 0.1));
+	}
+	
+	/* Tool uses - Purple tint */
+	&[data-message-type="tool"] {
+		background: linear-gradient(135deg, 
+			hsl(270 60% 50% / 0.06), 
+			hsl(270 60% 50% / 0.03)
+		);
+		border-left: 3px solid hsl(270 60% 50% / 0.6);
+		box-shadow: var(--shadow-sm, 0 1px 3px 0 rgb(0 0 0 / 0.1));
+	}
+	
+	/* Completion/Success - Green tint */
+	&[data-message-type="completion"] {
+		background: linear-gradient(135deg, 
+			hsl(var(--status-active, 142 71% 45%) / 0.08), 
+			hsl(var(--status-active, 142 71% 45%) / 0.04)
+		);
+		border-left: 3px solid hsl(var(--status-active, 142 71% 45%));
+		box-shadow: var(--shadow-md, 0 4px 6px -1px rgb(0 0 0 / 0.1));
+	}
+	
+	/* Errors - Red tint */
+	&[data-message-type="error"] {
+		background: linear-gradient(135deg, 
+			hsl(var(--destructive, 0 84% 60%) / 0.08), 
+			hsl(var(--destructive, 0 84% 60%) / 0.04)
+		);
+		border-left: 3px solid hsl(var(--destructive, 0 84% 60%));
+		box-shadow: var(--shadow-sm, 0 1px 3px 0 rgb(0 0 0 / 0.1));
+	}
+	
+	/* Commands - Orange tint */
+	&[data-message-type="command"] {
+		background: linear-gradient(135deg, 
+			hsl(30 100% 50% / 0.06), 
+			hsl(30 100% 50% / 0.03)
+		);
+		border-left: 3px solid hsl(30 100% 50% / 0.6);
+		box-shadow: var(--shadow-sm, 0 1px 3px 0 rgb(0 0 0 / 0.1));
+	}
+	
+	/* API requests - Cyan tint */
+	&[data-message-type="api"] {
+		background: linear-gradient(135deg, 
+			hsl(190 80% 50% / 0.06), 
+			hsl(190 80% 50% / 0.03)
+		);
+		border-left: 3px solid hsl(190 80% 50% / 0.6);
+		box-shadow: var(--shadow-sm, 0 1px 3px 0 rgb(0 0 0 / 0.1));
 	}
 `
 
@@ -109,8 +179,26 @@ const ChatRow = memo(
 		// This allows us to detect changes without causing re-renders
 		const prevHeightRef = useRef(0)
 
+		// Determine message type for styling
+		const getMessageType = () => {
+			if (message.say === "user_feedback" || message.say === "user_feedback_diff") return "user"
+			if (message.say === "completion_result" || message.ask === "completion_result") return "completion"
+			if (
+				message.say === "error" ||
+				message.ask === "mistake_limit_reached" ||
+				message.ask === "auto_approval_max_req_reached"
+			)
+				return "error"
+			if (message.ask === "command" || message.say === "command") return "command"
+			if (message.say === "api_req_started") return "api"
+			if (message.ask === "tool" || message.say === "tool") return "tool"
+			if (message.say === "text" || message.ask === "followup" || message.ask === "plan_mode_respond")
+				return "assistant-text"
+			return "default"
+		}
+
 		const [chatrow, { height }] = useSize(
-			<ChatRowContainer>
+			<ChatRowContainer data-message-type={getMessageType()}>
 				<ChatRowContent {...props} />
 			</ChatRowContainer>,
 		)
@@ -366,8 +454,10 @@ export const ChatRowContent = memo(
 		const headerStyle: React.CSSProperties = {
 			display: "flex",
 			alignItems: "center",
-			gap: "10px",
-			marginBottom: "12px",
+			gap: "12px",
+			marginBottom: "16px",
+			paddingBottom: "12px",
+			borderBottom: "1px solid hsl(var(--border, 214 32% 91%) / 0.5)",
 		}
 
 		const _pStyle: React.CSSProperties = {
@@ -1330,16 +1420,50 @@ export const ChatRowContent = memo(
 						let question: string | undefined
 						let options: string[] | undefined
 						let selected: string | undefined
+						let questions: any[] | undefined
+						let responses: Record<string, string | string[]> | undefined
+						let allAnswered: boolean | undefined
+
 						try {
-							const parsedMessage = JSON.parse(message.text || "{}") as ClineAskQuestion
-							question = parsedMessage.question
-							options = parsedMessage.options
-							selected = parsedMessage.selected
+							const parsedMessage = JSON.parse(message.text || "{}") as any
+
+							// Check if this is the new multiple questions format
+							if (parsedMessage.questions && Array.isArray(parsedMessage.questions)) {
+								questions = parsedMessage.questions
+								responses = parsedMessage.responses
+								allAnswered = parsedMessage.allAnswered
+							} else {
+								// Legacy single question format
+								question = parsedMessage.question
+								options = parsedMessage.options
+								selected = parsedMessage.selected
+							}
 						} catch (_e) {
 							// legacy messages would pass question directly
 							question = message.text
 						}
 
+						// Render multiple questions format
+						if (questions && questions.length > 0) {
+							return (
+								<>
+									{title && (
+										<div style={headerStyle}>
+											{icon}
+											{title}
+										</div>
+									)}
+									<MultipleQuestionsInput
+										allAnswered={allAnswered}
+										existingResponses={responses}
+										isActive={isLast && lastModifiedMessage?.ask === "followup"}
+										questions={questions}
+									/>
+								</>
+							)
+						}
+
+						// Render legacy single question format
 						return (
 							<>
 								{title && (

@@ -1464,10 +1464,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								className="w-full h-full"
 								colorBack={"rgba(0,0,0,0)"}
 								colors={[
-									"#9d57fa", // purple
-									"#57c7fa", // cyan
-									"#fa57a8", // pink
-									"#9d57fa", // purple again for smooth loop
+									"var(--color-gradient-purple)", // purple
+									"var(--color-gradient-cyan)", // cyan
+									"var(--color-gradient-pink)", // pink
+									"var(--color-gradient-purple)", // purple again for smooth loop
 								]}
 								intensity={0.4}
 								pulse={0.3}
@@ -1525,7 +1525,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					)}
 					<div
 						className={cn(
-							"absolute bottom-2.5 top-2.5 whitespace-pre-wrap break-words rounded-xs overflow-hidden bg-input-background",
+							"absolute bottom-2.5 top-2.5 whitespace-pre-wrap break-words overflow-hidden bg-input-background",
 							isTextAreaFocused || isVoiceRecording
 								? "left-3.5 right-3.5"
 								: "left-3.5 right-3.5 border border-input-border",
@@ -1541,7 +1541,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							fontFamily: "var(--vscode-font-family)",
 							fontSize: "var(--vscode-editor-font-size)",
 							lineHeight: "var(--vscode-editor-line-height)",
-							borderRadius: 2,
+							borderRadius: "var(--radius-md, 12px)",
 							borderLeft: isTextAreaFocused || isVoiceRecording ? 0 : undefined,
 							borderRight: isTextAreaFocused || isVoiceRecording ? 0 : undefined,
 							borderTop: isTextAreaFocused || isVoiceRecording ? 0 : undefined,
@@ -1590,7 +1590,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							backgroundColor: "transparent",
 							color: "var(--vscode-input-foreground)",
 							//border: "1px solid var(--vscode-input-border)",
-							borderRadius: 2,
+							borderRadius: "var(--radius-md, 12px)",
 							fontFamily: "var(--vscode-font-family)",
 							fontSize: "var(--vscode-editor-font-size)",
 							lineHeight: "var(--vscode-editor-line-height)",

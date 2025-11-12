@@ -5,7 +5,7 @@ import styled from "styled-components"
 import { visit } from "unist-util-visit"
 import "./codeblock-parser.css"
 
-export const CODE_BLOCK_BG_COLOR = "var(--vscode-editor-background, --vscode-sideBar-background, rgb(30 30 30))"
+export const CODE_BLOCK_BG_COLOR = "var(--vscode-editor-background, --vscode-sideBar-background, var(--color-code-bg))"
 
 /*
 overflowX: auto + inner div with padding results in an issue where the top/left/bottom padding renders but the right padding inside does not count as overflow as the width of the element is not exceeded. Once the inner div is outside the boundaries of the parent it counts as overflow.
@@ -20,9 +20,9 @@ interface CodeBlockProps {
 	forceWrap?: boolean
 }
 
-const StyledMarkdown = styled.div<{ forceWrap: boolean }>`
-	${({ forceWrap }) =>
-		forceWrap &&
+const StyledMarkdown = styled.div<{ $forceWrap: boolean }>`
+	${({ $forceWrap }) =>
+		$forceWrap &&
 		`
     pre, code {
       white-space: pre-wrap;
@@ -35,7 +35,7 @@ const StyledMarkdown = styled.div<{ forceWrap: boolean }>`
 		background-color: ${CODE_BLOCK_BG_COLOR};
 		border-radius: 5px;
 		margin: 0;
-		min-width: ${({ forceWrap }) => (forceWrap ? "auto" : "max-content")};
+		min-width: ${({ $forceWrap }) => ($forceWrap ? "auto" : "max-content")};
 		padding: 10px 10px;
 	}
 
@@ -65,7 +65,7 @@ const StyledMarkdown = styled.div<{ forceWrap: boolean }>`
 
 	code:not(pre > code) {
 		font-family: var(--vscode-editor-font-family);
-		color: #f78383;
+		color: var(--color-code-error);
 	}
 
 	background-color: ${CODE_BLOCK_BG_COLOR};
@@ -83,7 +83,7 @@ const StyledMarkdown = styled.div<{ forceWrap: boolean }>`
 		"Helvetica Neue",
 		sans-serif;
 	font-size: var(--vscode-editor-font-size, var(--vscode-font-size, 12px));
-	color: var(--vscode-editor-foreground, #fff);
+	color: var(--vscode-editor-foreground, var(--color-code-fg));
 
 	p,
 	li,
@@ -95,7 +95,7 @@ const StyledMarkdown = styled.div<{ forceWrap: boolean }>`
 
 const StyledPre = styled.pre<{ theme: any }>`
 	& .hljs {
-		color: var(--vscode-editor-foreground, #fff);
+		color: var(--vscode-editor-foreground, var(--color-code-fg));
 	}
 
 	${(props) =>
@@ -150,7 +150,7 @@ const CodeBlock = memo(({ source, forceWrap = false }: CodeBlockProps) => {
 				maxHeight: forceWrap ? "none" : "100%",
 				backgroundColor: CODE_BLOCK_BG_COLOR,
 			}}>
-			<StyledMarkdown className="ph-no-capture" forceWrap={forceWrap}>
+			<StyledMarkdown $forceWrap={forceWrap} className="ph-no-capture">
 				{reactContent}
 			</StyledMarkdown>
 		</div>

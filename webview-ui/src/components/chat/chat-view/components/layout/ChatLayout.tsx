@@ -30,6 +30,7 @@ const ChatLayoutContainer = styled.div.withConfig({
 	height: 100%;
 	min-height: 100vh;
 	position: relative;
+	background: var(--vscode-sideBar-background);
 `
 
 const MainContent = styled.div`
@@ -37,4 +38,8 @@ const MainContent = styled.div`
 	flex-direction: column;
 	overflow: hidden;
 	grid-row: 1;
+	max-width: 70%;
+	margin: 0 auto;
+	width: 100%;
+	padding: var(--spacing-lg, 16px) 0;
 `
