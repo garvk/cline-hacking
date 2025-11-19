@@ -1,3 +1,4 @@
+import { PromptOverrideType } from "@/generated/nice-grpc/cline/sdk/prompts"
 import { ModelFamily } from "@/shared/prompts"
 import { getModelFamily } from ".."
 import { getSystemPromptComponents } from "../components"
@@ -71,6 +72,19 @@ export class PromptRegistry {
 	async get(context: SystemPromptContext): Promise<string> {
 		await this.load()
 
+		const promptConfig = context.promptConfiguration
+
+		// SIMPLE MODE: Return custom prompt text directly
+		if (promptConfig?.overrideType === PromptOverrideType.PROMPT_OVERRIDE_TYPE_SIMPLE) {
+			if (!promptConfig.simplePromptText) {
+				console.warn("SIMPLE mode enabled but no prompt text provided, returning empty string")
+				return ""
+			}
+			console.log("Using SIMPLE mode with custom prompt text")
+			return promptConfig.simplePromptText
+		}
+
+		// COMPLEX MODE or DEFAULT: Use existing variant system
 		// Try model family fallback (e.g., "claude-4" -> "claude")
 		const modelFamily = getModelFamily(context.providerInfo)
 		let variant = this.variants.get(modelFamily ?? ModelFamily.GENERIC)

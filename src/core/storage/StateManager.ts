@@ -141,14 +141,27 @@ export class StateManager {
 			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
 		}
 
+		console.log("[STATEMANAGER:BATCH] setGlobalStateBatch called with keys:", Object.keys(updates))
+		console.log("[STATEMANAGER:BATCH] Provider values:", {
+			planModeApiProvider: updates.planModeApiProvider,
+			actModeApiProvider: updates.actModeApiProvider,
+		})
+
 		// Update cache in one go
 		// Using object.assign to because typescript is not able to infer the type of the updates object when using Object.entries
 		Object.assign(this.globalStateCache, updates)
+
+		console.log("[STATEMANAGER:BATCH] Cache updated. Current cache values:", {
+			planModeApiProvider: this.globalStateCache.planModeApiProvider,
+			actModeApiProvider: this.globalStateCache.actModeApiProvider,
+		})
 
 		// Then track the keys for persistence
 		Object.keys(updates).forEach((key) => {
 			this.pendingGlobalState.add(key as GlobalStateKey)
 		})
+
+		console.log("[STATEMANAGER:BATCH] Pending keys count:", this.pendingGlobalState.size)
 
 		// Schedule debounced persistence
 		this.scheduleDebouncedPersistence()
@@ -380,6 +393,14 @@ export class StateManager {
 			throw new Error(STATE_MANAGER_NOT_INITIALIZED)
 		}
 
+		console.log("[STATEMANAGER:SETAPI] ========== setApiConfiguration called ==========")
+		console.log("[STATEMANAGER:SETAPI] Received configuration:", {
+			planModeApiProvider: apiConfiguration.planModeApiProvider,
+			actModeApiProvider: apiConfiguration.actModeApiProvider,
+			planModeApiModelId: apiConfiguration.planModeApiModelId,
+			actModeApiModelId: apiConfiguration.actModeApiModelId,
+		})
+
 		const {
 			apiKey,
 			openRouterApiKey,
@@ -524,6 +545,7 @@ export class StateManager {
 			actModeOcaModelInfo,
 		} = apiConfiguration
 
+		console.log("[STATEMANAGER:SETAPI] Calling setGlobalStateBatch...")
 		// Batch update global state keys
 		this.setGlobalStateBatch({
 			// Plan mode configuration updates

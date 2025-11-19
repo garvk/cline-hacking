@@ -314,6 +314,92 @@ function convertApiProviderToProto(provider: string | undefined): ProtoApiProvid
 
 // Convert proto ApiProvider to application ApiProvider
 export function convertProtoToApiProvider(provider: ProtoApiProvider): ApiProvider {
+	console.log("[PROTO_CONVERSION] convertProtoToApiProvider called with:", provider, "type:", typeof provider)
+
+	// Handle string enum names (from gRPC serialization)
+	if (typeof provider === "string") {
+		const enumName = provider as string
+		console.log("[PROTO_CONVERSION] Received string enum name:", enumName)
+		switch (enumName) {
+			case "ANTHROPIC":
+				return "anthropic"
+			case "OPENROUTER":
+				return "openrouter"
+			case "BEDROCK":
+				return "bedrock"
+			case "VERTEX":
+				return "vertex"
+			case "OPENAI":
+				return "openai"
+			case "OLLAMA":
+				return "ollama"
+			case "LMSTUDIO":
+				return "lmstudio"
+			case "GEMINI":
+				return "gemini"
+			case "OPENAI_NATIVE":
+				return "openai-native"
+			case "REQUESTY":
+				return "requesty"
+			case "TOGETHER":
+				return "together"
+			case "DEEPSEEK":
+				return "deepseek"
+			case "QWEN":
+				return "qwen"
+			case "QWEN_CODE":
+				return "qwen-code"
+			case "DOUBAO":
+				return "doubao"
+			case "MISTRAL":
+				return "mistral"
+			case "VSCODE_LM":
+				return "vscode-lm"
+			case "CLINE":
+				return "cline"
+			case "LITELLM":
+				return "litellm"
+			case "MOONSHOT":
+				return "moonshot"
+			case "HUGGINGFACE":
+				return "huggingface"
+			case "NEBIUS":
+				return "nebius"
+			case "FIREWORKS":
+				return "fireworks"
+			case "ASKSAGE":
+				return "asksage"
+			case "XAI":
+				return "xai"
+			case "SAMBANOVA":
+				return "sambanova"
+			case "CEREBRAS":
+				return "cerebras"
+			case "GROQ":
+				return "groq"
+			case "BASETEN":
+				return "baseten"
+			case "SAPAICORE":
+				return "sapaicore"
+			case "CLAUDE_CODE":
+				return "claude-code"
+			case "HUAWEI_CLOUD_MAAS":
+				return "huawei-cloud-maas"
+			case "VERCEL_AI_GATEWAY":
+				return "vercel-ai-gateway"
+			case "ZAI":
+				return "zai"
+			case "DIFY":
+				return "dify"
+			case "OCA":
+				return "oca"
+			default:
+				console.warn("[PROTO_CONVERSION] Unknown string enum name:", enumName, "- defaulting to anthropic")
+				return "anthropic"
+		}
+	}
+
+	// Handle numeric enum values
 	switch (provider) {
 		case ProtoApiProvider.ANTHROPIC:
 			return "anthropic"
@@ -388,6 +474,7 @@ export function convertProtoToApiProvider(provider: ProtoApiProvider): ApiProvid
 		case ProtoApiProvider.OCA:
 			return "oca"
 		default:
+			console.warn("[PROTO_CONVERSION] Unknown numeric enum value:", provider, "- defaulting to anthropic")
 			return "anthropic"
 	}
 }

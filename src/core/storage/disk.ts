@@ -68,6 +68,20 @@ export async function ensureTaskDirectoryExists(taskId: string): Promise<string>
 }
 
 export async function ensureRulesDirectoryExists(): Promise<string> {
+	// Check for custom global rules directory from environment variable
+	const customRulesDir = process.env.CLINE_GLOBAL_RULES_DIR
+	if (customRulesDir) {
+		const expandedPath = customRulesDir.replace(/^~/, os.homedir())
+		try {
+			await fs.mkdir(expandedPath, { recursive: true })
+			return expandedPath
+		} catch (error) {
+			console.error(`Failed to create custom global rules directory at ${expandedPath}:`, error)
+			// Fall through to default path
+		}
+	}
+
+	// Default path: ~/Documents/Cline/Rules
 	const userDocumentsPath = await getDocumentsPath()
 	const clineRulesDir = path.join(userDocumentsPath, "Cline", "Rules")
 	try {

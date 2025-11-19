@@ -24,12 +24,19 @@ export const useApiConfigurationHandlers = () => {
 			[field]: value,
 		}
 
-		const protoConfig = convertApiConfigurationToProto(updatedConfig)
-		await ModelsServiceClient.updateApiConfigurationProto(
-			UpdateApiConfigurationRequest.create({
-				apiConfiguration: protoConfig,
-			}),
-		)
+		try {
+			console.log("[DEBUG] handleFieldChange sending updateApiConfigurationProto", { field, value })
+			const protoConfig = convertApiConfigurationToProto(updatedConfig)
+			await ModelsServiceClient.updateApiConfigurationProto(
+				UpdateApiConfigurationRequest.create({
+					apiConfiguration: protoConfig,
+				}),
+			)
+			console.log("[DEBUG] handleFieldChange success")
+		} catch (err) {
+			console.error("[DEBUG] handleFieldChange failed", err)
+			throw err
+		}
 	}
 
 	/**
@@ -47,12 +54,19 @@ export const useApiConfigurationHandlers = () => {
 			...updates,
 		}
 
-		const protoConfig = convertApiConfigurationToProto(updatedConfig)
-		await ModelsServiceClient.updateApiConfigurationProto(
-			UpdateApiConfigurationRequest.create({
-				apiConfiguration: protoConfig,
-			}),
-		)
+		try {
+			console.log("[DEBUG] handleFieldsChange sending updateApiConfigurationProto", { updates })
+			const protoConfig = convertApiConfigurationToProto(updatedConfig)
+			await ModelsServiceClient.updateApiConfigurationProto(
+				UpdateApiConfigurationRequest.create({
+					apiConfiguration: protoConfig,
+				}),
+			)
+			console.log("[DEBUG] handleFieldsChange success")
+		} catch (err) {
+			console.error("[DEBUG] handleFieldsChange failed", err)
+			throw err
+		}
 	}
 
 	const handleModeFieldChange = async <PlanK extends keyof ApiConfiguration, ActK extends keyof ApiConfiguration>(
@@ -60,6 +74,14 @@ export const useApiConfigurationHandlers = () => {
 		value: ApiConfiguration[PlanK] & ApiConfiguration[ActK], // Intersection ensures value is compatible with both field types
 		currentMode: Mode,
 	) => {
+		console.log("[DEBUG] handleModeFieldChange BEFORE", {
+			fieldPair,
+			value,
+			currentMode,
+			planActSeparateModelsSetting,
+			currentPlanProvider: apiConfiguration?.planModeApiProvider,
+			currentActProvider: apiConfiguration?.actModeApiProvider,
+		})
 		if (planActSeparateModelsSetting) {
 			const targetField = fieldPair[currentMode]
 			await handleFieldChange(targetField, value)
@@ -69,6 +91,10 @@ export const useApiConfigurationHandlers = () => {
 				[fieldPair.act]: value,
 			})
 		}
+		console.log("[DEBUG] handleModeFieldChange AFTER", {
+			newPlanProvider: apiConfiguration?.planModeApiProvider,
+			newActProvider: apiConfiguration?.actModeApiProvider,
+		})
 	}
 
 	/**

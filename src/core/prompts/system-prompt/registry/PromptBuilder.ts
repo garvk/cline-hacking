@@ -1,3 +1,4 @@
+import type { PromptConfiguration, ToolPromptOverride } from "@/generated/nice-grpc/cline/sdk/prompts"
 import type { ClineDefaultTool } from "@/shared/tools"
 import { getModelFamily } from "../"
 import { ClineToolSet } from "../registry/ClineToolSet"
@@ -30,9 +31,25 @@ export class PromptBuilder {
 	private async buildComponents(): Promise<Record<string, string>> {
 		const sections: Record<string, string> = {}
 		const { componentOrder } = this.variant
+		const promptConfig = this.context.promptConfiguration
 
 		// Process components sequentially to maintain order
 		for (const componentId of componentOrder) {
+			// Skip if disabled
+			if (promptConfig?.disabledComponents?.includes(componentId)) {
+				console.log(`Skipping disabled component: ${componentId}`)
+				continue
+			}
+
+			// Check for component override (COMPLEX mode)
+			const override = this.getComponentOverride(componentId, promptConfig)
+			if (override) {
+				console.log(`Using override for component: ${componentId}`)
+				sections[componentId] = override
+				continue
+			}
+
+			// Use default component function
 			const componentFn = this.components[componentId]
 			if (!componentFn) {
 				console.warn(`Warning: Component '${componentId}' not found`)
@@ -50,6 +67,35 @@ export class PromptBuilder {
 		}
 
 		return sections
+	}
+
+	/**
+	 * Get component override from promptConfiguration
+	 * Maps component IDs (snake_case) to proto field names (camelCase)
+	 */
+	private getComponentOverride(componentId: string, promptConfig?: PromptConfiguration): string | undefined {
+		if (!promptConfig?.componentOverrides) {
+			return undefined
+		}
+
+		// Map component IDs to override fields
+		const overrideMap: Record<string, string | undefined> = {
+			agent_role: promptConfig.componentOverrides.agentRole,
+			tool_use: promptConfig.componentOverrides.toolUse,
+			todo: promptConfig.componentOverrides.todo,
+			mcp: promptConfig.componentOverrides.mcp,
+			editing_files: promptConfig.componentOverrides.editingFiles,
+			act_vs_plan: promptConfig.componentOverrides.actVsPlan,
+			task_progress: promptConfig.componentOverrides.taskProgress,
+			capabilities: promptConfig.componentOverrides.capabilities,
+			feedback: promptConfig.componentOverrides.feedback,
+			rules: promptConfig.componentOverrides.rules,
+			system_info: promptConfig.componentOverrides.systemInfo,
+			objective: promptConfig.componentOverrides.objective,
+			user_instructions: promptConfig.componentOverrides.userInstructions,
+		}
+
+		return overrideMap[componentId]
 	}
 
 	private preparePlaceholders(componentSections: Record<string, string>): Record<string, unknown> {
@@ -146,16 +192,33 @@ export class PromptBuilder {
 			resolvedTools = resolvedTools.sort((a, b) => a.config.id.localeCompare(b.config.id))
 		}
 
-		// Filter by context requirements
-		const enabledTools = resolvedTools.filter(
-			(tool) => !tool.config.contextRequirements || tool.config.contextRequirements(context),
-		)
+		const promptConfig = context.promptConfiguration
+
+		// Filter by context requirements and disabled tools
+		const enabledTools = resolvedTools.filter((tool) => {
+			// Skip if disabled in promptConfiguration
+			if (promptConfig?.disabledTools?.includes(tool.config.id)) {
+				console.log(`Skipping disabled tool: ${tool.config.id}`)
+				return false
+			}
+			// Check context requirements
+			return !tool.config.contextRequirements || tool.config.contextRequirements(context)
+		})
 
 		const ids = enabledTools.map((tool) => tool.config.id)
 		return Promise.all(enabledTools.map((tool) => PromptBuilder.tool(tool.config, ids, context)))
 	}
 
 	public static tool(config: ClineToolSpec, registry: ClineDefaultTool[], context: SystemPromptContext): string {
+		const promptConfig = context.promptConfiguration
+
+		// Check for tool override
+		const toolOverride = PromptBuilder.getToolOverride(config.id, promptConfig)
+		if (toolOverride) {
+			console.log(`Using override for tool: ${config.id}`)
+			return PromptBuilder.buildToolFromOverride(config.id, toolOverride)
+		}
+
 		// Skip tools without parameters or description - those are placeholder tools
 		if (!config.parameters?.length && !config.description?.length) {
 			return ""
@@ -200,6 +263,72 @@ export class PromptBuilder {
 			PromptBuilder.buildParametersSection(filteredParams),
 			PromptBuilder.buildUsageSection(config.id, filteredParams),
 		]
+
+		return sections.filter(Boolean).join("\n")
+	}
+
+	/**
+	 * Get tool override from promptConfiguration
+	 * Maps tool IDs (snake_case) to proto field names (camelCase)
+	 */
+	private static getToolOverride(toolId: string, promptConfig?: PromptConfiguration): ToolPromptOverride | undefined {
+		if (!promptConfig?.enableToolOverrides || !promptConfig.toolOverrides) {
+			return undefined
+		}
+
+		// Map tool IDs to override fields
+		const overrideMap: Record<string, ToolPromptOverride | undefined> = {
+			execute_command: promptConfig.toolOverrides.executeCommand,
+			read_file: promptConfig.toolOverrides.readFile,
+			write_to_file: promptConfig.toolOverrides.writeToFile,
+			replace_in_file: promptConfig.toolOverrides.replaceInFile,
+			search_files: promptConfig.toolOverrides.searchFiles,
+			list_files: promptConfig.toolOverrides.listFiles,
+			list_code_definition_names: promptConfig.toolOverrides.listCodeDefinitionNames,
+			browser_action: promptConfig.toolOverrides.browserAction,
+			ask_followup_question: promptConfig.toolOverrides.askFollowupQuestion,
+			attempt_completion: promptConfig.toolOverrides.attemptCompletion,
+			use_mcp_tool: promptConfig.toolOverrides.useMcpTool,
+			access_mcp_resource: promptConfig.toolOverrides.accessMcpResource,
+			web_fetch: promptConfig.toolOverrides.webFetch,
+			new_task: promptConfig.toolOverrides.newTask,
+			plan_mode_respond: promptConfig.toolOverrides.planModeRespond,
+			load_mcp_documentation: promptConfig.toolOverrides.loadMcpDocumentation,
+		}
+
+		return overrideMap[toolId]
+	}
+
+	/**
+	 * Build tool prompt from ToolPromptOverride
+	 */
+	private static buildToolFromOverride(toolId: string, override: ToolPromptOverride): string {
+		const sections: string[] = []
+
+		// Tool title
+		sections.push(`## ${toolId}`)
+
+		// Description
+		if (override.description) {
+			sections.push(`Description: ${override.description}`)
+		}
+
+		// Parameters instruction
+		if (override.parametersInstruction) {
+			sections.push(`Parameters:\n${override.parametersInstruction}`)
+		} else if (override.customParameters) {
+			sections.push(`Parameters:\n${override.customParameters}`)
+		}
+
+		// Usage example
+		if (override.usageExample) {
+			sections.push(`Usage:\n${override.usageExample}`)
+		}
+
+		// Additional examples
+		if (override.examples && override.examples.length > 0) {
+			sections.push(`\nExamples:\n${override.examples.join("\n\n")}`)
+		}
 
 		return sections.filter(Boolean).join("\n")
 	}

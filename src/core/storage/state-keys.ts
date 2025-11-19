@@ -104,6 +104,7 @@ export interface Settings {
 	autoCondenseThreshold: number | undefined // number from 0 to 1
 	ocaBaseUrl: string | undefined
 	ocaMode: string | undefined
+	currentPromptConfigKey: string | undefined // Key of the currently selected prompt configuration
 
 	// Plan mode configurations
 	planModeApiProvider: ApiProvider
