@@ -4,6 +4,7 @@ import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import debounce from "debounce"
 import {
 	CheckCheck,
+	FileText,
 	FlaskConical,
 	Info,
 	LucideIcon,
@@ -25,6 +26,7 @@ import BrowserSettingsSection from "./sections/BrowserSettingsSection"
 import DebugSection from "./sections/DebugSection"
 import FeatureSettingsSection from "./sections/FeatureSettingsSection"
 import GeneralSettingsSection from "./sections/GeneralSettingsSection"
+import PromptSettingsSection from "./sections/PromptSettingsSection"
 import TerminalSettingsSection from "./sections/TerminalSettingsSection"
 
 const IS_DEV = process.env.IS_DEV
@@ -55,6 +57,13 @@ export const SETTINGS_TABS: SettingsTab[] = [
 		tooltipText: "API Configuration",
 		headerText: "API Configuration",
 		icon: SlidersHorizontal,
+	},
+	{
+		id: "prompts",
+		name: "Prompts",
+		tooltipText: "Prompt Configuration",
+		headerText: "Prompt Configuration",
+		icon: FileText,
 	},
 	{
 		id: "features",
@@ -129,6 +138,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 	const TAB_CONTENT_MAP = useMemo(
 		() => ({
 			"api-config": ApiConfigurationSection,
+			prompts: PromptSettingsSection,
 			general: GeneralSettingsSection,
 			features: FeatureSettingsSection,
 			browser: BrowserSettingsSection,

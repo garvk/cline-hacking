@@ -1,0 +1,187 @@
+syntax = "proto3";
+
+package cline.sdk;
+
+option go_package = "github.com/cline/grpc-go/cline/sdk";
+option java_package = "bot.cline.sdk.proto";
+option java_multiple_files = true;
+
+// Enum for prompt override mode
+enum PromptOverrideType {
+  // No override, use default Cline prompts
+  PROMPT_OVERRIDE_TYPE_UNSPECIFIED = 0;
+  
+  // Simple mode: Replace entire system prompt with custom text
+  // This completely overrides Cline's default prompt system
+  PROMPT_OVERRIDE_TYPE_SIMPLE = 1;
+  
+  // Complex mode: Use component-based prompt builder
+  // This allows selective override of specific prompt sections
+  PROMPT_OVERRIDE_TYPE_COMPLEX = 2;
+}
+
+// Component overrides for complex mode
+// Each field corresponds to a SystemPromptSection in Cline Core
+message ComponentOverrides {
+  // "You are X..." - Agent identity and core capabilities
+  optional string agent_role = 1;
+  
+  // Tool use guidelines and formatting instructions  
+  optional string tool_use = 2;
+  
+  // TODO list management instructions
+  optional string todo = 3;
+  
+  // MCP (Model Context Protocol) integration rules
+  optional string mcp = 4;
+  
+  // File editing guidelines and best practices
+  optional string editing_files = 5;
+  
+  // PLAN MODE vs ACT MODE instructions
+  optional string act_vs_plan = 6;
+  
+  // Task progress tracking instructions
+  optional string task_progress = 7;
+  
+  // Agent capabilities description
+  optional string capabilities = 8;
+  
+  // Feedback handling instructions
+  optional string feedback = 9;
+  
+  // Custom behavior rules
+  optional string rules = 10;
+  
+  // System information formatting
+  optional string system_info = 11;
+  
+  // Task objective and execution strategy
+  optional string objective = 12;
+  
+  // User-provided instructions section
+  optional string user_instructions = 13;
+}
+
+// Tool prompt override for individual tools
+message ToolPromptOverride {
+  // Tool description (what it does)
+  optional string description = 1;
+  
+  // Parameters instruction (how to use parameters)
+  optional string parameters_instruction = 2;
+  
+  // Usage example (XML format example)
+  optional string usage_example = 3;
+  
+  // Additional examples (for complex tools)
+  repeated string examples = 4;
+  
+  // Custom parameter definitions (if needed)
+  optional string custom_parameters = 5;
+}
+
+// Tool overrides for all available tools
+// Field names must match ClineDefaultTool enum values (snake_case)
+message ToolOverrides {
+  optional ToolPromptOverride execute_command = 1;
+  optional ToolPromptOverride read_file = 2;
+  optional ToolPromptOverride write_to_file = 3;
+  optional ToolPromptOverride replace_in_file = 4;
+  optional ToolPromptOverride search_files = 5;
+  optional ToolPromptOverride list_files = 6;
+  optional ToolPromptOverride list_code_definition_names = 7;
+  optional ToolPromptOverride browser_action = 8;
+  optional ToolPromptOverride ask_followup_question = 9;
+  optional ToolPromptOverride attempt_completion = 10;
+  optional ToolPromptOverride use_mcp_tool = 11;
+  optional ToolPromptOverride access_mcp_resource = 12;
+  optional ToolPromptOverride web_fetch = 13;
+  optional ToolPromptOverride new_task = 14;
+  optional ToolPromptOverride plan_mode_respond = 15;
+  optional ToolPromptOverride load_mcp_documentation = 16;
+}
+
+// Base template override (for advanced customization)
+message TemplateOverride {
+  // Custom template with {{placeholder}} syntax
+  // Placeholders correspond to SystemPromptSection values
+  // Example: "{{AGENT_ROLE}}\n\n{{TOOL_USE}}\n\n{{RULES}}"
+  optional string base_template = 1;
+  
+  // Custom order of components in the template
+  // If not provided, uses default order from variant
+  repeated string component_order = 2;
+  
+  // Custom placeholders for template resolution
+  // Map of placeholder_name -> value
+  map<string, string> custom_placeholders = 3;
+}
+
+// Main prompt configuration message
+// This is the top-level configuration that gets passed via TaskSettings
+message PromptConfiguration {
+  // Override mode: SIMPLE or COMPLEX
+  PromptOverrideType override_type = 1;
+  
+  // ========================================
+  // SIMPLE MODE fields
+  // ========================================
+  
+  // Complete replacement text for SIMPLE mode
+  // When override_type = SIMPLE, this replaces the entire system prompt
+  optional string simple_prompt_text = 2;
+  
+  // ========================================
+  // COMPLEX MODE fields
+  // ========================================
+  
+  // Component-level overrides for COMPLEX mode
+  // Selectively replace specific prompt sections
+  optional ComponentOverrides component_overrides = 3;
+  
+  // Template override for COMPLEX mode (advanced)
+  // Replace the base template structure
+  optional TemplateOverride template_override = 4;
+  
+  // ========================================
+  // TOOL OVERRIDE fields (works with both modes)
+  // ========================================
+  
+  // Enable tool prompt overrides
+  // When true, tool_overrides are applied
+  optional bool enable_tool_overrides = 5;
+  
+  // Tool-specific prompt overrides
+  // Customize individual tool descriptions and usage
+  optional ToolOverrides tool_overrides = 6;
+  
+  // ========================================
+  // ADVANCED CONFIGURATION
+  // ========================================
+  
+  // Merge behavior for COMPLEX mode
+  // If true: Custom components merge with defaults (additive)
+  // If false: Custom components replace defaults completely (override)
+  // Default: false (replace)
+  optional bool preserve_default_components = 7;
+  
+  // Merge behavior for tool overrides
+  // If true: Custom tool prompts merge with defaults
+  // If false: Custom tool prompts replace defaults completely
+  // Default: false (replace)
+  optional bool preserve_default_tools = 8;
+  
+  // Disable specific default components (for COMPLEX mode)
+  // List of component IDs to exclude from the prompt
+  // Example: ["editing_files", "browser_action"]
+  repeated string disabled_components = 9;
+  
+  // Disable specific tools (exclude from prompt)
+  // List of tool IDs to exclude from the tool use section
+  repeated string disabled_tools = 10;
+  
+  // Custom metadata (for SDK tracking/debugging)
+  // Key-value pairs for additional configuration
+  map<string, string> metadata = 11;
+}

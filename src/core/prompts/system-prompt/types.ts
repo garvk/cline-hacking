@@ -3,6 +3,7 @@
  */
 
 import { ApiProviderInfo } from "@/core/api"
+import type { PromptConfiguration } from "@/generated/nice-grpc/cline/sdk/prompts"
 import type { McpHub } from "@/services/mcp/McpHub"
 import type { BrowserSettings } from "@/shared/BrowserSettings"
 import type { FocusChainSettings } from "@/shared/FocusChainSettings"
@@ -108,6 +109,7 @@ export interface SystemPromptContext {
 	readonly yoloModeToggled?: boolean
 	readonly isMultiRootEnabled?: boolean
 	readonly workspaceRoots?: Array<{ path: string; name: string; vcs?: string }>
+	readonly promptConfiguration?: PromptConfiguration // PromptConfiguration from proto (SDK customization)
 }
 
 /**

@@ -291,6 +291,12 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 			controller.stateManager.setGlobalState("multiRootEnabled", !!request.multiRootEnabled)
 		}
 
+		// Update current prompt config key
+		if (request.currentPromptConfigKey !== undefined) {
+			console.log(`[updateSettings] Setting currentPromptConfigKey to: ${request.currentPromptConfigKey}`)
+			controller.stateManager.setGlobalState("currentPromptConfigKey", request.currentPromptConfigKey)
+		}
+
 		// Post updated state to webview
 		await controller.postStateToWebview()
 

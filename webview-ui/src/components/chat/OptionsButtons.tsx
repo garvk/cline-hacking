@@ -1,24 +1,51 @@
 import { AskResponseRequest } from "@shared/proto/cline/task"
 import styled from "styled-components"
-import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock"
 import { TaskServiceClient } from "@/services/grpc-client"
 
 const OptionButton = styled.button<{ isSelected?: boolean; isNotSelectable?: boolean }>`
-	padding: 8px 12px;
-	background: ${(props) => (props.isSelected ? "var(--vscode-focusBorder)" : CODE_BLOCK_BG_COLOR)};
-	color: ${(props) => (props.isSelected ? "white" : "var(--vscode-input-foreground)")};
-	border: 1px solid var(--vscode-editorGroup-border);
-	border-radius: 2px;
+	padding: 12px 16px;
+	background: ${(props) => (props.isSelected ? "hsl(var(--primary, 221 83% 53%))" : "hsl(var(--card, 0 0% 100%))")};
+	color: ${(props) => (props.isSelected ? "white" : "hsl(var(--foreground, 222 47% 11%))")};
+	border: 2px solid ${(props) => (props.isSelected ? "hsl(var(--primary, 221 83% 53%))" : "hsl(var(--border, 214 32% 91%))")};
+	border-radius: var(--radius-md, 12px);
 	cursor: ${(props) => (props.isNotSelectable ? "default" : "pointer")};
 	text-align: left;
-	font-size: 12px;
+	font-size: 14px;
+	font-weight: 500;
+	transition: all var(--transition-fast, 150ms);
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	box-shadow: ${(props) =>
+		props.isSelected
+			? "var(--shadow-md, 0 4px 6px -1px rgb(0 0 0 / 0.1))"
+			: "var(--shadow-sm, 0 1px 3px 0 rgb(0 0 0 / 0.1))"};
+	opacity: ${(props) => (props.isNotSelectable && !props.isSelected ? 0.6 : 1)};
 
 	${(props) =>
 		!props.isNotSelectable &&
+		!props.isSelected &&
 		`
 		&:hover {
-			background: var(--vscode-focusBorder);
-			color: white;
+			background: hsl(var(--primary, 221 83% 53%) / 0.1);
+			border-color: hsl(var(--primary, 221 83% 53%));
+			transform: translateY(-1px);
+			box-shadow: var(--shadow-md, 0 4px 6px -1px rgb(0 0 0 / 0.1));
+		}
+		
+		&:active {
+			transform: translateY(0);
+		}
+	`}
+	
+	${(props) =>
+		props.isSelected &&
+		`
+		&::before {
+			content: "✓";
+			font-size: 16px;
+			font-weight: bold;
 		}
 	`}
 `
@@ -45,13 +72,22 @@ export const OptionsButtons = ({
 			style={{
 				display: "flex",
 				flexDirection: "column",
-				gap: "8px",
-				paddingTop: 15,
-				// marginTop: "22px",
+				gap: "12px",
+				paddingTop: 20,
 			}}>
-			{/* <div style={{ color: "var(--vscode-descriptionForeground)", fontSize: "11px", textTransform: "uppercase" }}>
-				SELECT ONE:
-			</div> */}
+			{isActive && !hasSelected && (
+				<div
+					style={{
+						color: "hsl(var(--muted-foreground, 215 16% 47%))",
+						fontSize: "13px",
+						fontWeight: 600,
+						textTransform: "uppercase",
+						letterSpacing: "0.05em",
+						marginBottom: "4px",
+					}}>
+					Choose an option:
+				</div>
+			)}
 			{options.map((option, index) => (
 				<OptionButton
 					className="options-button"
@@ -75,7 +111,19 @@ export const OptionsButtons = ({
 							console.error("Error sending option response:", error)
 						}
 					}}>
-					<span className="ph-no-capture">{option}</span>
+					<span className="ph-no-capture" style={{ flex: 1 }}>
+						{option}
+					</span>
+					{isActive && !hasSelected && (
+						<span
+							className="codicon codicon-chevron-right"
+							style={{
+								fontSize: "14px",
+								opacity: 0.6,
+								marginLeft: "auto",
+							}}
+						/>
+					)}
 				</OptionButton>
 			))}
 		</div>

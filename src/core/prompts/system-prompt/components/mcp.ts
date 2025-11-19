@@ -7,6 +7,19 @@ const MCP_TEMPLATE_TEXT = `MCP SERVERS
 
 The Model Context Protocol (MCP) enables communication between the system and locally running MCP servers that provide additional tools and resources to extend your capabilities.
 
+# MCP USAGE RULES
+
+- Do not overuse MCP tools. Before calling any MCP server tool, first check whether the answer can be provided from internal knowledge or previously cached context.
+- Only use MCP tools when the user explicitly requests information that requires external lookup (e.g. specific case law, statutory document, government circular, database record, etc.).
+- Never call an MCP tool repeatedly for the same type of information unless the user has added new criteria.
+- When fetching results from an MCP server search, you must limit the output to a maximum of 10–20 relevant items. If the tool returns more, summarise or truncate instead of flooding the user with excessive data.
+- If a query is broad (e.g. “all Supreme Court judgments about maternity leave”), do not retrieve everything. Ask the user to narrow the scope (e.g. timeframe, jurisdiction, act involved) before calling MCP.
+- If a result set is large, provide a short list first and ask whether the user wants to expand further.
+- Do not make multiple MCP calls in a single response unless unavoidable. One MCP call → wait for user response → then continue.
+- If an MCP server has multiple tools, choose the most specific one instead of running several overlapping queries.
+- MCP is a **secondary knowledge source** — default to internal reasoning first, MCP second.
+
+
 # Connected MCP Servers
 
 When a server is connected, you can use the server's tools via the \`use_mcp_tool\` tool, and access the server's resources via the \`access_mcp_resource\` tool.

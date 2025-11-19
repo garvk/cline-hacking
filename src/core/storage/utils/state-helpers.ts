@@ -385,6 +385,8 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 		const actModeOcaModelInfo = context.globalState.get("actModeOcaModelInfo") as OcaModelInfo | undefined
 		const sapAiCoreUseOrchestrationMode =
 			context.globalState.get<GlobalStateAndSettings["sapAiCoreUseOrchestrationMode"]>("sapAiCoreUseOrchestrationMode")
+		const currentPromptConfigKey =
+			context.globalState.get<GlobalStateAndSettings["currentPromptConfigKey"]>("currentPromptConfigKey")
 
 		let apiProvider: ApiProvider
 		if (planModeApiProvider) {
@@ -572,6 +574,8 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			// Feature flag - defaults to false
 			// For now, always return false to disable multi-root support by default
 			multiRootEnabled: !!multiRootEnabled,
+			// Prompt configuration
+			currentPromptConfigKey,
 		}
 	} catch (error) {
 		console.error("[StateHelpers] Failed to read global state:", error)

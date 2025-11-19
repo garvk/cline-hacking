@@ -75,6 +75,7 @@ import { isInTestMode } from "../../services/test/TestMode"
 import { ensureLocalClineDirExists } from "../context/instructions/user-instructions/rule-helpers"
 import { refreshWorkflowToggles } from "../context/instructions/user-instructions/workflows"
 import { Controller } from "../controller"
+import { loadPromptConfiguration } from "../prompts/prompt-config-loader"
 import { StateManager } from "../storage/StateManager"
 import { FocusChainManager } from "./focus-chain"
 import { MessageStateHandler } from "./message-state"
@@ -1379,6 +1380,34 @@ export class Task {
 			}))
 		}
 
+		// Load prompt configuration from state manager
+		let promptConfiguration: any
+		const currentPromptConfigKey = this.stateManager.getGlobalSettingsKey("currentPromptConfigKey")
+
+		console.log(`[Task] Attempting to load prompt config. Key from StateManager: ${currentPromptConfigKey}`)
+
+		if (currentPromptConfigKey) {
+			try {
+				console.log(`[Task] Calling loadPromptConfiguration with key: ${currentPromptConfigKey}`)
+				promptConfiguration = loadPromptConfiguration(currentPromptConfigKey)
+
+				if (promptConfiguration) {
+					console.log(`[Task] ✅ Successfully loaded prompt configuration: ${currentPromptConfigKey}`)
+					console.log(`[Task] Override type: ${promptConfiguration.overrideType}`)
+					console.log(`[Task] Has simple text: ${!!promptConfiguration.simplePromptText}`)
+					if (promptConfiguration.simplePromptText) {
+						console.log(`[Task] Simple text preview: ${promptConfiguration.simplePromptText.substring(0, 100)}...`)
+					}
+				} else {
+					console.warn(`[Task] ⚠️ Failed to load prompt configuration: ${currentPromptConfigKey} (returned undefined)`)
+				}
+			} catch (error) {
+				console.error(`[Task] ❌ Error loading prompt configuration:`, error)
+			}
+		} else {
+			console.log(`[Task] No prompt configuration key set in StateManager`)
+		}
+
 		const promptContext: SystemPromptContext = {
 			cwd: this.cwd,
 			ide,
@@ -1397,6 +1426,7 @@ export class Task {
 			yoloModeToggled: this.stateManager.getGlobalSettingsKey("yoloModeToggled"),
 			isMultiRootEnabled: multiRootEnabled,
 			workspaceRoots,
+			promptConfiguration,
 		}
 
 		const systemPrompt = await getSystemPrompt(promptContext)
